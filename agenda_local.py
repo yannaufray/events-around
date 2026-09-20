@@ -138,14 +138,18 @@ _DT_CATEGORY_ORDER = [
 
 
 def datatourisme_category(types, title=""):
-    """DATAtourisme étiquette large (ex : les Journées du patrimoine portent le type
-    générique « SportsEvent »), donc on ne se fie aux types génériques Sport qu'en
-    dernier recours, après un indice textuel dans le titre."""
+    """DATAtourisme étiquette large et cumule plusieurs types sur un même objet
+    (ex : un vide-grenier avec concert porte à la fois GarageSale et Concert ; les
+    Journées du patrimoine portent le type générique « SportsEvent »). On tranche
+    d'abord sur un indice de titre sans ambiguïté, puis sur le type le plus
+    spécifique, et seulement en dernier recours sur les types génériques (Sport)."""
+    text = norm(title)
+    if re.search(r"\bvides?\s+greniers?\b", text) or any(k in text for k in ("brocante", "foire aux")):
+        return "Marchés & fêtes"
     types = set(types or [])
     for key, cat in _DT_CATEGORY_ORDER:
         if key in types:
             return cat
-    text = norm(title)
     if any(k in text for k in ("patrimoine", "chateau", "abbaye", "eglise", "musee", "grotte", "visite")):
         return "Patrimoine & visites"
     if any(k in text for k in ("conference", "vernissage", "dedicace", "rencontre", "lecture", "artiste")):

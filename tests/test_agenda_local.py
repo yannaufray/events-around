@@ -189,9 +189,17 @@ class TestCategories(unittest.TestCase):
         cat = al.datatourisme_category(types, "Grande course cycliste UFOLEP")
         self.assertEqual(cat, "Sport")
 
-    def test_datatourisme_specific_type_wins_over_title(self):
-        cat = al.datatourisme_category(["Concert", "CulturalEvent"], "Vide-grenier musical")
+    def test_datatourisme_specific_type_wins_when_no_title_hint(self):
+        cat = al.datatourisme_category(["Concert", "CulturalEvent"], "Soirée acoustique au jardin")
         self.assertEqual(cat, "Culture & spectacles")
+
+    def test_datatourisme_market_title_wins_over_concert_type(self):
+        # cas réel : DATAtourisme porte à la fois GarageSale/SaleEvent (marché) et
+        # Concert/MusicEvent (il y a de la musique en plus) sur "Vides grenier au
+        # Domaine du Sablou" — le titre doit trancher, pas l'ordre des types.
+        types = ["SocialEvent", "GarageSale", "MusicEvent", "TraditionalCelebration", "SaleEvent", "Concert", "CulturalEvent"]
+        cat = al.datatourisme_category(types, "Vides grenier au Domaine du Sablou")
+        self.assertEqual(cat, "Marchés & fêtes")
 
     def test_datatourisme_conference_falls_back_to_culture(self):
         # cas réel : DATAtourisme ne porte aucun type précis pour une conférence
