@@ -1063,6 +1063,7 @@ def _fav_button(e, uid):
         f'data-when="{html.escape(_fmt_when(e))}" data-place="{html.escape(e.place)}" '
         f'data-url="{html.escape(e.url)}" data-cat="{html.escape(e.category or "Autre")}" '
         f'data-start="{e.start.astimezone(TZ).isoformat()}" data-end="{e.end.astimezone(TZ).isoformat()}" '
+        f'data-desc="{html.escape(e.description)}" data-img="{html.escape(e.image)}" '
         f'aria-label="Enregistrer dans mes favoris">☆</button>'
     )
 
@@ -1441,12 +1442,20 @@ function markFavButtons(){{
 }}
 
 function favCardHtml(id, f){{
-  var titleHtml = f.url ? '<a href="' + favEsc(f.url) + '">' + favEsc(f.title) + '</a>' : favEsc(f.title);
-  return '<li data-cat="' + favEsc(f.cat) + '" data-id="' + favEsc(id) + '">'
-    + '<div class="cardhead"><button class="fav" type="button" data-id="' + favEsc(id) + '"></button>'
+  var bareLink = f.url && !f.desc && !f.img;
+  var titleHtml = bareLink ? '<a href="' + favEsc(f.url) + '">' + favEsc(f.title) + '</a>' : favEsc(f.title);
+  var header = '<div class="cardhead"><button class="fav" type="button" data-id="' + favEsc(id) + '"></button>'
     + '<div class="when">' + favEsc(f.when) + '</div><div class="t">' + titleHtml + '</div></div>'
-    + (f.place ? '<div class="m">' + favEsc(f.place) + '</div>' : '')
-    + '</li>';
+    + (f.place ? '<div class="m">' + favEsc(f.place) + '</div>' : '');
+  if (bareLink) {{
+    return '<li data-cat="' + favEsc(f.cat) + '" data-id="' + favEsc(id) + '">' + header + '</li>';
+  }}
+  var detail = '';
+  if (f.img) detail += '<img src="' + favEsc(f.img) + '" alt="" loading="lazy">';
+  if (f.desc) detail += '<div class="d">' + favEsc(f.desc) + '</div>';
+  if (f.url) detail += '<div><a class="more" href="' + favEsc(f.url) + '">Plus d\\'infos</a></div>';
+  return '<li data-cat="' + favEsc(f.cat) + '" data-id="' + favEsc(id) + '">'
+    + '<details><summary>' + header + '</summary>' + detail + '</details></li>';
 }}
 
 var ARCHIVE_LIMIT = 5;
@@ -1511,6 +1520,7 @@ document.body.addEventListener('click', function(ev){{
     favs[id] = {{
       title: b.dataset.title, when: b.dataset.when, place: b.dataset.place,
       url: b.dataset.url, cat: b.dataset.cat, start: b.dataset.start, end: b.dataset.end,
+      desc: b.dataset.desc, img: b.dataset.img,
     }};
     pushFavori(id, favs[id]);
   }}
