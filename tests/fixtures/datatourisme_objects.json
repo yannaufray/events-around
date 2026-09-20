@@ -1,0 +1,311 @@
+[
+  {
+    "hasBeenCreatedBy": {
+      "legalName": "OT Lascaux Dordogne Vallée Vézère",
+      "identifier": "62bfece2-9c0e-43d8-97de-5c4a5808d18e",
+      "address": [
+        {
+          "streetAddress": [
+            "Place Bertrand de Born"
+          ],
+          "postalCode": "24290",
+          "addressLocality": "Montignac"
+        }
+      ],
+      "homepage": [
+        "http://www.lascaux-dordogne.com/"
+      ]
+    },
+    "isLocatedAt": [
+      {
+        "geo": {
+          "latitude": 45.0731085,
+          "longitude": 1.11171571
+        },
+        "address": [
+          {
+            "hasAddressCity": {
+              "insee": "24174",
+              "isPartOfDepartment": {
+                "isPartOfRegion": {
+                  "isPartOfCountry": {
+                    "label": {
+                      "@en": "France",
+                      "@fr": "France"
+                    }
+                  },
+                  "insee": "75",
+                  "label": {
+                    "@en": "Nouvelle-Aquitaine",
+                    "@fr": "Nouvelle-Aquitaine"
+                  }
+                },
+                "insee": "24",
+                "label": {
+                  "@en": "Dordogne",
+                  "@fr": "Dordogne"
+                }
+              },
+              "label": {
+                "@en": "Fanlac",
+                "@fr": "Fanlac"
+              }
+            },
+            "streetAddress": [
+              "2877 route du Mémorial",
+              "Domaine du Sablou"
+            ],
+            "postalCode": "24290",
+            "addressLocality": "Fanlac"
+          }
+        ],
+        "altInsee": [
+          "FANLAC"
+        ],
+        "geoPoint": {
+          "lon": 1.11171571,
+          "lat": 45.0731085
+        }
+      }
+    ],
+    "label": {
+      "@en": "Vides grenier au Domaine du Sablou",
+      "@fr": "Vides grenier au Domaine du Sablou"
+    },
+    "lastUpdateDatatourisme": "2026-07-09T23:37:10.335Z",
+    "takesPlaceAt": [
+      {
+        "endDate": "2026-08-16",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "startDate": "2026-08-15"
+      },
+      {
+        "endDate": "2026-09-20",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "startDate": "2026-09-19"
+      },
+      {
+        "endDate": "2026-07-19",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "startDate": "2026-07-18"
+      },
+      {
+        "endDate": "2026-07-14",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "startDate": "2026-07-14"
+      },
+      {
+        "endDate": "2026-05-10",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "startDate": "2026-05-09"
+      },
+      {
+        "endDate": "2026-06-21",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "startDate": "2026-06-20"
+      }
+    ],
+    "uuid": "005fd025-008d-30f1-a7c4-74548abcdc64"
+  },
+  {
+    "hasBeenCreatedBy": {
+      "legalName": "OT Lascaux Dordogne Vallée Vézère",
+      "identifier": "62bfece2-9c0e-43d8-97de-5c4a5808d18e",
+      "address": [
+        {
+          "streetAddress": [
+            "Place Bertrand de Born"
+          ],
+          "postalCode": "24290",
+          "addressLocality": "Montignac"
+        }
+      ],
+      "homepage": [
+        "http://www.lascaux-dordogne.com/"
+      ]
+    },
+    "isLocatedAt": [
+      {
+        "geo": {
+          "latitude": 44.9363728,
+          "longitude": 1.0118686
+        },
+        "address": [
+          {
+            "hasAddressCity": {
+              "insee": "24172",
+              "isPartOfDepartment": {
+                "isPartOfRegion": {
+                  "isPartOfCountry": {
+                    "label": {
+                      "@en": "France",
+                      "@fr": "France"
+                    }
+                  },
+                  "insee": "75",
+                  "label": {
+                    "@en": "Nouvelle-Aquitaine",
+                    "@fr": "Nouvelle-Aquitaine"
+                  }
+                },
+                "insee": "24",
+                "label": {
+                  "@en": "Dordogne",
+                  "@fr": "Dordogne"
+                }
+              },
+              "label": {
+                "@en": "Les Eyzies",
+                "@fr": "Les Eyzies"
+              }
+            },
+            "streetAddress": [
+              "Dans le parc",
+              "Promenade de la Vézère"
+            ],
+            "postalCode": "24620",
+            "addressLocality": "Les Eyzies"
+          }
+        ],
+        "altInsee": [
+          "LES EYZIES"
+        ],
+        "geoPoint": {
+          "lon": 1.0118686,
+          "lat": 44.9363728
+        }
+      }
+    ],
+    "label": {
+      "@en": "Spectacle de danse - Ce qui nous lie",
+      "@fr": "Spectacle de danse - Ce qui nous lie"
+    },
+    "lastUpdateDatatourisme": "2026-09-12T23:25:26.811Z",
+    "takesPlaceAt": [
+      {
+        "endDate": "2026-10-02",
+        "startTime": "18:30",
+        "startDate": "2026-10-02"
+      }
+    ],
+    "uuid": "0474bfa8-53b4-3b6a-8633-77d2bf2d1417"
+  },
+  {
+    "hasBeenCreatedBy": {
+      "legalName": "Office de Tourisme Sarlat Périgord Noir",
+      "identifier": "fa60dd84-e212-47d5-9e32-7389dfb3daa2",
+      "address": [
+        {
+          "hasAddressCity": {
+            "insee": "24520",
+            "isPartOfDepartment": {
+              "isPartOfRegion": {
+                "isPartOfCountry": {
+                  "label": {
+                    "@en": "France",
+                    "@fr": "France"
+                  }
+                },
+                "insee": "75",
+                "label": {
+                  "@en": "Nouvelle-Aquitaine",
+                  "@fr": "Nouvelle-Aquitaine"
+                }
+              },
+              "insee": "24",
+              "label": {
+                "@en": "Dordogne",
+                "@fr": "Dordogne"
+              }
+            },
+            "label": {
+              "@en": "Sarlat-la-Canéda",
+              "@fr": "Sarlat-la-Canéda"
+            }
+          },
+          "streetAddress": [
+            "3 rue de Tourny"
+          ],
+          "postalCode": "24200",
+          "addressLocality": "Sarlat-la-Canéda"
+        }
+      ],
+      "telephone": [
+        "+33 5 53 31 45 45"
+      ],
+      "homepage": [
+        "http://www.sarlat-tourisme.com/"
+      ]
+    },
+    "isLocatedAt": [
+      {
+        "geo": {
+          "latitude": 44.890891,
+          "longitude": 1.217292
+        },
+        "address": [
+          {
+            "hasAddressCity": {
+              "insee": "24520",
+              "isPartOfDepartment": {
+                "isPartOfRegion": {
+                  "isPartOfCountry": {
+                    "label": {
+                      "@en": "France",
+                      "@fr": "France"
+                    }
+                  },
+                  "insee": "75",
+                  "label": {
+                    "@en": "Nouvelle-Aquitaine",
+                    "@fr": "Nouvelle-Aquitaine"
+                  }
+                },
+                "insee": "24",
+                "label": {
+                  "@en": "Dordogne",
+                  "@fr": "Dordogne"
+                }
+              },
+              "label": {
+                "@en": "Sarlat-la-Canéda",
+                "@fr": "Sarlat-la-Canéda"
+              }
+            },
+            "streetAddress": [
+              "Centre Culturel"
+            ],
+            "postalCode": "24200",
+            "addressLocality": "Sarlat-la-Canéda"
+          }
+        ],
+        "altInsee": [
+          "SARLAT-LA-CANEDA"
+        ],
+        "geoPoint": {
+          "lon": 1.217292,
+          "lat": 44.890891
+        }
+      }
+    ],
+    "label": {
+      "@en": "Centre Culturel : The Wackids",
+      "@fr": "Centre Culturel : The Wackids"
+    },
+    "lastUpdateDatatourisme": "2026-09-03T23:24:39.451Z",
+    "takesPlaceAt": [
+      {
+        "endDate": "2026-11-15",
+        "startTime": "16:00",
+        "startDate": "2026-11-15"
+      }
+    ],
+    "uuid": "04e01ad0-132a-3ad3-a501-e73e585ab49a"
+  }
+]

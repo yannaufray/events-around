@@ -1,0 +1,29 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//test//FR
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:test-timed-1@example.com
+DTSTART;TZID=Europe/Paris:20990615T190000
+DTEND;TZID=Europe/Paris:20990615T220000
+SUMMARY:Concert de test
+LOCATION:Salle des fêtes\, Montignac
+URL:https://example.com/concert
+DESCRIPTION:Un concert de test\nsur deux lignes
+GEO:45.0667;1.1667
+END:VEVENT
+BEGIN:VEVENT
+UID:test-allday-1@example.com
+DTSTART;VALUE=DATE:20990620
+DTEND;VALUE=DATE:20990622
+SUMMARY:Marché de producteurs
+LOCATION:Place du marché\, Montignac
+END:VEVENT
+BEGIN:VEVENT
+UID:test-recurring@example.com
+DTSTART;TZID=Europe/Paris:20990701T100000
+DTEND;TZID=Europe/Paris:20990701T120000
+RRULE:FREQ=WEEKLY;COUNT=5
+SUMMARY:Cours de yoga
+END:VEVENT
+END:VCALENDAR

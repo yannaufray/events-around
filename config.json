@@ -1,0 +1,43 @@
+{
+  "centre": {
+    "nom": "Montignac",
+    "lat": 45.0667,
+    "lon": 1.1667
+  },
+  "rayon_km": 20,
+  "jours": 30,
+  "dossier_sortie": "sortie",
+  "sources": {
+    "openagenda": true,
+    "datatourisme": true
+  },
+  "flux_ics": [],
+  "pages_web": [
+    {
+      "nom": "Mairie de Montignac",
+      "urls": [
+        "https://ville-montignac.com/agenda/categorie/evenement",
+        "https://ville-montignac.com/agenda/categorie/concert",
+        "https://ville-montignac.com/agenda/categorie/concert-chant",
+        "https://ville-montignac.com/agenda/categorie/jazz",
+        "https://ville-montignac.com/agenda/categorie/spectacle",
+        "https://ville-montignac.com/agenda/categorie/fete",
+        "https://ville-montignac.com/agenda/categorie/enfants",
+        "https://ville-montignac.com/agenda/categorie/livre",
+        "https://ville-montignac.com/agenda/categorie/sport",
+        "https://ville-montignac.com/agenda/categorie/rugby",
+        "https://ville-montignac.com/agenda/categorie/vide-grenier",
+        "https://ville-montignac.com/agenda/categorie/festival-soirs-des-toiles"
+      ],
+      "pages": 2,
+      "lat": 45.0667,
+      "lon": 1.1667
+    }
+  ],
+  "bibliotheques": [
+    {
+      "nom": "Bibliothèque Jacques Cabanel (Montignac)",
+      "url": "https://ville-montignac.com/culture/bibliotheque"
+    }
+  ]
+}

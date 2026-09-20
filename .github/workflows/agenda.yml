@@ -1,0 +1,47 @@
+name: Générer l'agenda et publier sur GitHub Pages
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # tous les lundis à 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Lancer les tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Générer l'agenda
+        env:
+          DATATOURISME_KEY: ${{ secrets.DATATOURISME_KEY }}
+        run: python3 agenda_local.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sortie
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
