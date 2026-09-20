@@ -89,9 +89,25 @@ CATEGORIES = [
     "Patrimoine & visites",
     "Marchés & fêtes",
     "Sport",
+    "Nature & randonnées",
     "Enfants & familles",
     "Autre",
 ]
+
+# mots-clés sport non ambigus (dont les activités "sur appareils"/en salle et les
+# courses type trail, qui ne portent pas forcément le mot "sport")
+_SPORT_KEYWORDS = (
+    "sport", "rugby", "petanque", "tournoi", "trail", "pilates", "yoga", "fitness",
+    "zumba", "course a pied", "randonnee sportive", "vtt", "cyclo", "match",
+)
+# sorties nature (balades commentées, brame du cerf...) : à distinguer du sport et
+# du "Autre" fourre-tout — mais on évite le mot "nature" seul (trop ambigu, ex.
+# "nature morte" en arts plastiques).
+_NATURE_KEYWORDS = (
+    "brame", "randonnee", "rando accompagnee", "rando decouverte", "balade nature",
+    "balade decouverte", "sortie nature", "faune", "flore", "ornitholog", "champignon",
+    "cueillette", "sentier", "eco pature", "observation des etoiles", "astronomie",
+)
 
 
 def openagenda_category(title, keywords, origin_title):
@@ -110,18 +126,18 @@ def openagenda_category(title, keywords, origin_title):
     if any(
         k in text
         for k in (
-            "concert", "festival", "spectacle", "theatre", "danse", "musique", "cinema", "expo",
-            "conference", "vernissage", "dedicace", "rencontre", "lecture", "lecture publique", "artiste",
+            "concert", "festival", "spectacle", "theatre", "danse", "choregraphi", "musique", "cinema",
+            "expo", "conference", "vernissage", "dedicace", "rencontre", "lecture", "lecture publique",
+            "artiste",
         )
     ):
         return "Culture & spectacles"
     if any(k in text for k in ("marche", "fete", "vide grenier", "brocante", "foire")):
         return "Marchés & fêtes"
-    # note : les sorties nature (balades, brame du cerf...) portent souvent un tag
-    # "randonnee"/"nature" sans être un événement sportif — on exige un terme de
-    # sport non ambigu pour éviter de les classer à tort dans "Sport".
-    if any(k in text for k in ("sport", "rugby", "petanque", "tournoi")):
+    if any(k in text for k in _SPORT_KEYWORDS):
         return "Sport"
+    if any(k in text for k in _NATURE_KEYWORDS):
+        return "Nature & randonnées"
     if any(k in text for k in ("enfant", "jeune public", "famille")):
         return "Enfants & familles"
     return "Autre"
@@ -177,13 +193,17 @@ def datatourisme_category(types, title=""):
         return "Culture & spectacles"
     if "SportsCompetition" in types:
         return "Sport"
-    # SportsEvent/Rambling sont des types génériques que DATAtourisme colle aussi à
-    # des sorties nature sans rapport (brame du cerf, balades découverte...) — on
-    # exige un terme de sport explicite dans le titre pour les classer en "Sport".
-    if types & {"SportsEvent", "Rambling"} and any(
-        k in text for k in ("sport", "rugby", "petanque", "tournoi", "course", "match", "competition")
+    if any(k in text for k in _SPORT_KEYWORDS) or any(
+        k in text for k in ("course", "competition")
     ):
         return "Sport"
+    # SportsEvent/Rambling sont des types génériques que DATAtourisme colle aussi à
+    # tout un tas de choses sans rapport (un stage de dessin, une conférence...) —
+    # on ne les range en "Nature & randonnées" que si le titre le confirme
+    # explicitement, sinon ils tombent dans "Autre" comme n'importe quel autre
+    # évènement sans indice de catégorie clair.
+    if any(k in text for k in _NATURE_KEYWORDS):
+        return "Nature & randonnées"
     return "Autre"
 
 
@@ -953,6 +973,13 @@ def wednesday_window(now):
 
 
 # ---------------------------------------------------------------- sorties
+def event_uid(title, start):
+    """Identifiant stable d'un événement (titre + date), utilisé à la fois pour
+    l'UID iCal et pour repérer un événement enregistré en favori d'une génération
+    de la page à l'autre (le titre exact et la date ne changent pas)."""
+    return hashlib.sha1(f"{norm(title)}{start.date()}".encode()).hexdigest()[:20]
+
+
 def _ics_escape(s):
     return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
@@ -979,7 +1006,7 @@ def write_ics(events, path, now):
 
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//agenda-local//FR", "X-WR-CALNAME:Sorties locales", "CALSCALE:GREGORIAN"]
     for e in events:
-        uid = hashlib.sha1(f"{norm(e.title)}{e.start.date()}".encode()).hexdigest()[:20] + "@agenda-local"
+        uid = event_uid(e.title, e.start) + "@agenda-local"
         desc = "Source : " + ", ".join(e.sources)
         if e.distance is not None:
             desc += f"\nDistance : {e.distance:.0f} km"
@@ -1018,8 +1045,23 @@ def _fmt_when(e):
     return f"{JOURS[s.weekday()]} {s:%d/%m} {s:%H:%M}"
 
 
+def _fav_button(e, uid):
+    """Étoile d'enregistrement en favori : toutes les données nécessaires pour
+    reconstruire la carte dans la section Favoris sont portées en attributs, car
+    cette section est peuplée en JS depuis localStorage (l'événement peut avoir
+    disparu du flux lors d'une régénération ultérieure de la page)."""
+    return (
+        f'<button class="fav" type="button" data-id="{uid}" data-title="{html.escape(e.title)}" '
+        f'data-when="{html.escape(_fmt_when(e))}" data-place="{html.escape(e.place)}" '
+        f'data-url="{html.escape(e.url)}" data-cat="{html.escape(e.category or "Autre")}" '
+        f'data-start="{e.start.astimezone(TZ).isoformat()}" data-end="{e.end.astimezone(TZ).isoformat()}" '
+        f'aria-label="Enregistrer dans mes favoris">☆</button>'
+    )
+
+
 def _card(e):
     title = html.escape(e.title)
+    uid = event_uid(e.title, e.start)
     meta = [x for x in (html.escape(e.place), f"{e.distance:.0f} km" if e.distance is not None else "") if x]
     attr_lines = "".join(
         f'<div class="a">Source : {html.escape(producer)}, mis à jour le {html.escape(updated)}</div>'
@@ -1028,13 +1070,15 @@ def _card(e):
     )
     cat = html.escape(e.category or "Autre")
     dist_attr = f' data-dist="{e.distance:.0f}"' if e.distance is not None else ""
+    bare_link = e.url and not e.description and not e.image
+    title_html = f'<a href="{html.escape(e.url)}">{title}</a>' if bare_link else title
     header = (
-        f'<div class="when">{_fmt_when(e)}</div><div class="t">{title}</div>'
+        f'<div class="cardhead">{_fav_button(e, uid)}<div class="when">{_fmt_when(e)}</div>'
+        f'<div class="t">{title_html}</div></div>'
         f'<div class="m">{" · ".join(meta)}</div><div class="s">{html.escape(", ".join(e.sources))}</div>{attr_lines}'
     )
-    if e.url and not e.description and not e.image:
-        header = header.replace(title, f'<a href="{html.escape(e.url)}">{title}</a>', 1)
-        return f'<li data-cat="{cat}"{dist_attr}>{header}</li>'
+    if bare_link:
+        return f'<li data-cat="{cat}" data-id="{uid}"{dist_attr}>{header}</li>'
     detail = ""
     if e.image:
         detail += f'<img src="{html.escape(e.image)}" alt="" loading="lazy">'
@@ -1049,7 +1093,7 @@ def _card(e):
         q = parse.quote(f"{e.title} {e.place}".strip())
         detail += f'<div><a class="more" href="https://www.google.com/search?q={q}">Rechercher en ligne</a></div>'
     return (
-        f'<li data-cat="{cat}"{dist_attr}><details><summary>{header}</summary>{detail}</details></li>'
+        f'<li data-cat="{cat}" data-id="{uid}"{dist_attr}><details><summary>{header}</summary>{detail}</details></li>'
     )
 
 
@@ -1130,7 +1174,7 @@ def write_html(events, path, cfg, now, lieux=()):
         filters_html += f'<div class="filters">{dist_bar}</div>'
     default_km = paliers[0]["km"] if paliers else cfg["rayon_km"]
 
-    section_defs = list(windows)
+    section_defs = [("Favoris", None, None)] + list(windows)
     if buckets["À venir"]:
         section_defs.append(("À venir", None, None))
     if lieux:
@@ -1139,7 +1183,14 @@ def write_html(events, path, cfg, now, lieux=()):
     nav = "".join(f'<a href="#{_slug(lbl)}">{html.escape(lbl)}</a>' for lbl, _, _ in section_defs)
     nav_html = f'<nav class="jump">{nav}</nav>' if len(section_defs) > 1 else ""
 
-    body = "".join(_section(label_, buckets[label_]) for label_, _, _ in windows)
+    favoris_html = (
+        f'<section id="{_slug("Favoris")}"><h2>Favoris</h2>'
+        f'<ul id="favoris-upcoming"><li>Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</li></ul>'
+        f'<div id="favoris-archived-wrap" style="display:none"><h3>Passés</h3><ul id="favoris-archived"></ul></div>'
+        f"</section>"
+    )
+
+    body = favoris_html + "".join(_section(label_, buckets[label_]) for label_, _, _ in windows)
     if buckets["À venir"]:
         body += _section("À venir", buckets["À venir"])
 
@@ -1176,7 +1227,12 @@ nav.jump a{{font-size:13px;background:#eee;border-radius:12px;padding:4px 10px;c
 .filters button{{border:1px solid #ccc;background:#fff;border-radius:12px;padding:4px 10px;font:inherit;color:inherit;cursor:pointer}}
 .filters button.active{{background:#0a5;border-color:#0a5;color:#fff}}
 li.hidden{{display:none}}
-@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}}}
+.cardhead{{overflow:hidden}}
+.fav{{float:right;background:none;border:none;font-size:20px;line-height:1.2;cursor:pointer;color:#bbb;padding:0 0 4px 8px}}
+.fav.active{{color:#e0a500}}
+h3{{font-size:14px;margin:14px 0 6px;color:#666}}
+.fav-toggle{{display:block;width:100%;border:1px dashed #ccc;background:none;border-radius:8px;padding:8px;font:inherit;font-size:13px;color:#0a5;cursor:pointer}}
+@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}}}
 </style></head><body><h1>Sorties autour de {label} ({default_km} km)</h1>
 {nav_html}
 {filters_html}
@@ -1207,6 +1263,94 @@ distButtons.forEach(function(b){{
     applyFilters();
   }});
 }});
+
+// --- favoris (localStorage, persiste d'une génération de page à l'autre) ---
+function favEsc(s){{
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}}
+function loadFavs(){{
+  try {{ return JSON.parse(localStorage.getItem('agendaFavoris') || '{{}}'); }} catch (err) {{ return {{}}; }}
+}}
+function saveFavs(favs){{
+  try {{ localStorage.setItem('agendaFavoris', JSON.stringify(favs)); }} catch (err) {{}}
+}}
+var favs = loadFavs();
+
+function markFavButtons(){{
+  document.querySelectorAll('.fav').forEach(function(b){{
+    var on = !!favs[b.dataset.id];
+    b.textContent = on ? '★' : '☆';
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-label', on ? 'Retirer des favoris' : 'Enregistrer dans mes favoris');
+  }});
+}}
+
+function favCardHtml(id, f){{
+  var titleHtml = f.url ? '<a href="' + favEsc(f.url) + '">' + favEsc(f.title) + '</a>' : favEsc(f.title);
+  return '<li data-cat="' + favEsc(f.cat) + '" data-id="' + favEsc(id) + '">'
+    + '<div class="cardhead"><button class="fav" type="button" data-id="' + favEsc(id) + '"></button>'
+    + '<div class="when">' + favEsc(f.when) + '</div><div class="t">' + titleHtml + '</div></div>'
+    + (f.place ? '<div class="m">' + favEsc(f.place) + '</div>' : '')
+    + '</li>';
+}}
+
+var ARCHIVE_LIMIT = 5;
+var archivedExpanded = false;
+
+function renderFavoris(){{
+  var upcoming = [], archived = [];
+  var now = new Date();
+  Object.keys(favs).forEach(function(id){{
+    // un évènement long (expo, saison...) reste "à venir" tant qu'il n'est pas
+    // terminé, même s'il a déjà commencé — c'est la fin (end), pas le début
+    // (start), qui détermine s'il doit passer en archives.
+    (new Date(favs[id].end || favs[id].start) >= now ? upcoming : archived).push(id);
+  }});
+  upcoming.sort(function(a, b){{ return new Date(favs[a].start) - new Date(favs[b].start); }});
+  archived.sort(function(a, b){{ return new Date(favs[b].end || favs[b].start) - new Date(favs[a].end || favs[a].start); }});
+  var upcomingList = document.getElementById('favoris-upcoming');
+  var archivedWrap = document.getElementById('favoris-archived-wrap');
+  var archivedList = document.getElementById('favoris-archived');
+  upcomingList.innerHTML = upcoming.length
+    ? upcoming.map(function(id){{ return favCardHtml(id, favs[id]); }}).join('')
+    : '<li>Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</li>';
+  var shown = archivedExpanded ? archived : archived.slice(0, ARCHIVE_LIMIT);
+  var archiveHtml = shown.map(function(id){{ return favCardHtml(id, favs[id]); }}).join('');
+  if (archived.length > ARCHIVE_LIMIT) {{
+    var label = archivedExpanded ? 'Réduire' : 'Afficher les ' + (archived.length - ARCHIVE_LIMIT) + ' précédents';
+    archiveHtml += '<li><button type="button" class="fav-toggle" id="favoris-toggle-archive">' + label + '</button></li>';
+  }}
+  archivedList.innerHTML = archiveHtml;
+  archivedWrap.style.display = archived.length ? '' : 'none';
+  markFavButtons();
+}}
+
+document.body.addEventListener('click', function(ev){{
+  if (ev.target.closest('#favoris-toggle-archive')) {{
+    archivedExpanded = !archivedExpanded;
+    renderFavoris();
+    return;
+  }}
+  var b = ev.target.closest('.fav');
+  if (!b) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  var id = b.dataset.id;
+  if (favs[id]) {{
+    delete favs[id];
+  }} else {{
+    favs[id] = {{
+      title: b.dataset.title, when: b.dataset.when, place: b.dataset.place,
+      url: b.dataset.url, cat: b.dataset.cat, start: b.dataset.start, end: b.dataset.end,
+    }};
+  }}
+  saveFavs(favs);
+  renderFavoris();
+}});
+
+renderFavoris();
 </script>
 </body></html>"""
     Path(path).write_text(page, encoding="utf-8")

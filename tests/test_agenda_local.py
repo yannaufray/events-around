@@ -279,14 +279,28 @@ class TestCategories(unittest.TestCase):
     def test_datatourisme_nature_outing_not_sport(self):
         # cas réel observé : DATAtourisme colle le type générique "SportsEvent" à
         # des sorties nature sans rapport avec le sport (observation du brame du
-        # cerf, week-end découverte...).
+        # cerf, week-end découverte...) : elles vont dans "Nature & randonnées",
+        # pas dans "Sport" ni dans le fourre-tout "Autre".
         types = ["EntertainmentAndEvent", "SportsEvent", "CulturalEvent"]
         cat = al.datatourisme_category(types, "Soirée brame du cerf aux Eyzies")
-        self.assertEqual(cat, "Autre")
+        self.assertEqual(cat, "Nature & randonnées")
 
     def test_datatourisme_nature_weekend_not_sport(self):
+        # le mot "nature" seul n'est volontairement pas un déclencheur (trop
+        # ambigu : cf. "nature morte" en arts plastiques) — sans mot-clé plus
+        # spécifique (brame, randonnée, balade nature...), l'évènement tombe dans
+        # "Autre" plutôt que d'être classé à tort en "Sport" ou en "Nature".
         types = ["EntertainmentAndEvent", "Rambling", "PointOfInterest"]
         cat = al.datatourisme_category(types, "Week-end nature, saveurs et détente")
+        self.assertEqual(cat, "Autre")
+
+    def test_datatourisme_generic_type_without_keyword_not_nature(self):
+        # cas réel observé : un stage de dessin porte le type générique
+        # "SportsEvent" chez DATAtourisme sans aucun rapport avec le sport ni la
+        # nature — le simple type ne doit jamais suffire à classer en "Nature &
+        # randonnées", il faut un mot-clé explicite dans le titre.
+        types = ["EntertainmentAndEvent", "SportsEvent", "CulturalEvent"]
+        cat = al.datatourisme_category(types, "Dessiner est un super pouvoir - stage Le dessin de visage")
         self.assertEqual(cat, "Autre")
 
     def test_datatourisme_prehistoric_site_is_heritage(self):
@@ -301,6 +315,26 @@ class TestCategories(unittest.TestCase):
     def test_openagenda_falls_back_to_autre(self):
         cat = al.openagenda_category("Réunion du conseil", [], "")
         self.assertEqual(cat, "Autre")
+
+    def test_openagenda_pilates_is_sport(self):
+        cat = al.openagenda_category("Cours Pilates sur appareils", [], "")
+        self.assertEqual(cat, "Sport")
+
+    def test_openagenda_choreographic_walk_is_culture(self):
+        cat = al.openagenda_category("Déambulation chorégraphique", [], "")
+        self.assertEqual(cat, "Culture & spectacles")
+
+    def test_openagenda_trail_is_sport(self):
+        cat = al.openagenda_category("Trail des châtaigniers", [], "")
+        self.assertEqual(cat, "Sport")
+
+    def test_openagenda_nature_outing_not_autre(self):
+        cat = al.openagenda_category("Sortie nature : observation des rapaces", [], "")
+        self.assertEqual(cat, "Nature & randonnées")
+
+    def test_datatourisme_trail_with_sport_type_is_sport(self):
+        cat = al.datatourisme_category(["EntertainmentAndEvent", "SportsEvent"], "Trail nocturne de la Vézère")
+        self.assertEqual(cat, "Sport")
 
 
 class TestWeekendWindow(unittest.TestCase):
