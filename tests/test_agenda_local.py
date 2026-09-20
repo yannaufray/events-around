@@ -170,6 +170,7 @@ class TestDatatourisme(unittest.TestCase):
             source, producer, updated = e.attributions[0]
             self.assertEqual(source, "DATAtourisme")
             self.assertTrue(producer)  # legalName toujours présent sur ces fixtures
+            self.assertTrue(e.url.startswith("https://data.datatourisme.fr/"))
 
     def test_empty_window_yields_no_events(self):
         out = al._datatourisme_object_events(self.objects[0], dt(1900, 1, 1), dt(1901, 1, 1))

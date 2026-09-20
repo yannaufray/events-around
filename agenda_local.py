@@ -379,7 +379,7 @@ def fetch_datatourisme(cfg, w_start, w_end):
     if not key:
         raise RuntimeError("DATATOURISME_KEY absente (variable d'environnement ou .env)")
     lat0, lon0, radius = cfg["centre"]["lat"], cfg["centre"]["lon"], cfg["rayon_km"]
-    fields = "uuid,label,type,takesPlaceAt,isLocatedAt,hasBeenCreatedBy,lastUpdateDatatourisme"
+    fields = "uuid,uri,label,type,takesPlaceAt,isLocatedAt,hasBeenCreatedBy,lastUpdateDatatourisme"
     url = DATATOURISME_API + "/entertainmentAndEvent?" + parse.urlencode(
         {"geo_distance": f"{lat0},{lon0},{radius}km", "page_size": 250, "fields": fields}
     )

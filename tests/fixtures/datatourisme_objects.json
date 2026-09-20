@@ -111,7 +111,8 @@
         "startDate": "2026-06-20"
       }
     ],
-    "uuid": "005fd025-008d-30f1-a7c4-74548abcdc64"
+    "uuid": "005fd025-008d-30f1-a7c4-74548abcdc64",
+    "uri": "https://data.datatourisme.fr/24/005fd025-008d-30f1-a7c4-74548abcdc64"
   },
   {
     "hasBeenCreatedBy": {
@@ -194,7 +195,8 @@
         "startDate": "2026-10-02"
       }
     ],
-    "uuid": "0474bfa8-53b4-3b6a-8633-77d2bf2d1417"
+    "uuid": "0474bfa8-53b4-3b6a-8633-77d2bf2d1417",
+    "uri": "https://data.datatourisme.fr/24/0474bfa8-53b4-3b6a-8633-77d2bf2d1417"
   },
   {
     "hasBeenCreatedBy": {
@@ -306,6 +308,7 @@
         "startDate": "2026-11-15"
       }
     ],
-    "uuid": "04e01ad0-132a-3ad3-a501-e73e585ab49a"
+    "uuid": "04e01ad0-132a-3ad3-a501-e73e585ab49a",
+    "uri": "https://data.datatourisme.fr/24/04e01ad0-132a-3ad3-a501-e73e585ab49a"
   }
 ]
