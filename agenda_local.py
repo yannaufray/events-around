@@ -1070,6 +1070,7 @@ def _card(e):
     )
     cat = html.escape(e.category or "Autre")
     dist_attr = f' data-dist="{e.distance:.0f}"' if e.distance is not None else ""
+    place_attr = f' data-place="{html.escape(norm(e.place))}"' if e.place else ""
     bare_link = e.url and not e.description and not e.image
     title_html = f'<a href="{html.escape(e.url)}">{title}</a>' if bare_link else title
     header = (
@@ -1078,7 +1079,7 @@ def _card(e):
         f'<div class="m">{" · ".join(meta)}</div><div class="s">{html.escape(", ".join(e.sources))}</div>{attr_lines}'
     )
     if bare_link:
-        return f'<li data-cat="{cat}" data-id="{uid}"{dist_attr}>{header}</li>'
+        return f'<li data-cat="{cat}" data-id="{uid}"{dist_attr}{place_attr}>{header}</li>'
     detail = ""
     if e.image:
         detail += f'<img src="{html.escape(e.image)}" alt="" loading="lazy">'
@@ -1093,7 +1094,7 @@ def _card(e):
         q = parse.quote(f"{e.title} {e.place}".strip())
         detail += f'<div><a class="more" href="https://www.google.com/search?q={q}">Rechercher en ligne</a></div>'
     return (
-        f'<li data-cat="{cat}" data-id="{uid}"{dist_attr}><details><summary>{header}</summary>{detail}</details></li>'
+        f'<li data-cat="{cat}" data-id="{uid}"{dist_attr}{place_attr}><details><summary>{header}</summary>{detail}</details></li>'
     )
 
 
@@ -1167,12 +1168,17 @@ def write_html(events, path, cfg, now, lieux=()):
     paliers = sorted(cfg.get("paliers_rayon", []), key=lambda p: p["km"])
     if len(paliers) > 1:
         dist_bar = "".join(
-            f'<button class="distf{" active" if i == 0 else ""}" data-maxdist="{p["km"]}">'
-            f'{html.escape(p["nom"])} (≤ {p["km"]} km)</button>'
+            f'<button class="distf{" active" if i == 0 else ""}" data-maxdist="{p["km"]}"'
+            f' data-include="{html.escape(",".join(norm(v) for v in p.get("inclure", [])))}">'
+            f'{html.escape(p["nom"])}'
+            + ("" if p.get("inclure") else f' (≤ {p["km"]} km)')
+            + "</button>"
             for i, p in enumerate(paliers)
         )
         filters_html += f'<div class="filters">{dist_bar}</div>'
-    default_km = paliers[0]["km"] if paliers else cfg["rayon_km"]
+    default_palier = paliers[0] if paliers else None
+    default_km = default_palier["km"] if default_palier and not default_palier.get("inclure") else cfg["rayon_km"]
+    h1_suffix = "" if default_palier and default_palier.get("inclure") else f"(≤ {default_km} km)"
 
     section_defs = [("Favoris", None, None)] + list(windows)
     if buckets["À venir"]:
@@ -1183,10 +1189,26 @@ def write_html(events, path, cfg, now, lieux=()):
     nav = "".join(f'<a href="#{_slug(lbl)}">{html.escape(lbl)}</a>' for lbl, _, _ in section_defs)
     nav_html = f'<nav class="jump">{nav}</nav>' if len(section_defs) > 1 else ""
 
+    # l'URL du worker n'est pas sensible (juste "où" envoyer), mais le code d'accès
+    # partagé, lui, ne doit JAMAIS être écrit dans cette page publique — voir la
+    # fonction de synchro en JS plus bas, qui le demande à l'utilisateur et le garde
+    # uniquement dans son propre localStorage.
+    sync_cfg = cfg.get("sync_favoris") or {}
+    sync_worker_url = sync_cfg.get("worker_url", "").rstrip("/")
+    sync_html = (
+        f'<div class="sync-box" id="sync-box">'
+        f'<button type="button" id="sync-activate">Activer la synchro partagée</button>'
+        f'<p class="s" id="sync-status" style="display:none"></p>'
+        f"</div>"
+        if sync_worker_url
+        else ""
+    )
+
     favoris_html = (
         f'<section id="{_slug("Favoris")}"><h2>Favoris</h2>'
         f'<ul id="favoris-upcoming"><li>Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</li></ul>'
         f'<div id="favoris-archived-wrap" style="display:none"><h3>Passés</h3><ul id="favoris-archived"></ul></div>'
+        f"{sync_html}"
         f"</section>"
     )
 
@@ -1233,7 +1255,7 @@ li.hidden{{display:none}}
 h3{{font-size:14px;margin:14px 0 6px;color:#666}}
 .fav-toggle{{display:block;width:100%;border:1px dashed #ccc;background:none;border-radius:8px;padding:8px;font:inherit;font-size:13px;color:#0a5;cursor:pointer}}
 @media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}}}
-</style></head><body><h1>Sorties autour de {label} ({default_km} km)</h1>
+</style></head><body><h1>Sorties autour de {label} <span id="km-suffix">{h1_suffix}</span></h1>
 {nav_html}
 {filters_html}
 {body}{footer}
@@ -1242,13 +1264,18 @@ var catButtons = document.querySelectorAll('.catf');
 var distButtons = document.querySelectorAll('.distf');
 var currentCat = '__all__';
 var currentDist = {default_km};
+var currentInclude = (distButtons[0] && distButtons[0].dataset.include) ?
+  distButtons[0].dataset.include.split(',').filter(Boolean) : [];
 function applyFilters(){{
   document.querySelectorAll('li').forEach(function(li){{
     var catOk = currentCat === '__all__' || !li.dataset.cat || li.dataset.cat === currentCat;
-    var distOk = !li.dataset.dist || Number(li.dataset.dist) <= currentDist;
-    li.classList.toggle('hidden', !(catOk && distOk));
+    var place = li.dataset.place || '';
+    var villeOk = !currentInclude.length || currentInclude.some(function(v){{ return place.indexOf(v) !== -1; }});
+    var distOk = currentInclude.length || !li.dataset.dist || Number(li.dataset.dist) <= currentDist;
+    li.classList.toggle('hidden', !(catOk && distOk && villeOk));
   }});
 }}
+applyFilters();
 catButtons.forEach(function(b){{
   b.addEventListener('click', function(){{
     currentCat = (currentCat === b.dataset.cat) ? '__all__' : b.dataset.cat;
@@ -1256,10 +1283,13 @@ catButtons.forEach(function(b){{
     applyFilters();
   }});
 }});
+var kmSuffix = document.getElementById('km-suffix');
 distButtons.forEach(function(b){{
   b.addEventListener('click', function(){{
     currentDist = Number(b.dataset.maxdist);
+    currentInclude = b.dataset.include ? b.dataset.include.split(',').filter(Boolean) : [];
     distButtons.forEach(function(x){{ x.classList.toggle('active', x === b); }});
+    if (kmSuffix) {{ kmSuffix.textContent = currentInclude.length ? '' : '(≤ ' + currentDist + ' km)'; }}
     applyFilters();
   }});
 }});
@@ -1277,6 +1307,63 @@ function saveFavs(favs){{
   try {{ localStorage.setItem('agendaFavoris', JSON.stringify(favs)); }} catch (err) {{}}
 }}
 var favs = loadFavs();
+
+// --- synchro partagée (opt-in) vers un service externe (worker Cloudflare, voir
+// cloudflare-worker/), pour que deux personnes voient les mêmes favoris et
+// s'abonnent au même calendrier Google Agenda. Désactivée par défaut : tant que
+// personne n'a saisi le code d'accès, tout reste purement local (comportement
+// d'origine). Le code n'est jamais écrit dans cette page ni dans le repo : il est
+// demandé une fois via prompt() et gardé uniquement dans le localStorage de la
+// personne qui l'a saisi.
+var SYNC_URL = {json.dumps(sync_worker_url)};
+function syncKey(){{
+  try {{ return localStorage.getItem('agendaSyncKey') || ''; }} catch (err) {{ return ''; }}
+}}
+function setSyncKey(k){{
+  try {{ if (k) localStorage.setItem('agendaSyncKey', k); else localStorage.removeItem('agendaSyncKey'); }} catch (err) {{}}
+}}
+function pushFavori(id, data){{
+  var key = syncKey();
+  if (!SYNC_URL || !key) return;
+  fetch(SYNC_URL + '/favoris', {{
+    method: 'POST',
+    headers: {{'Content-Type': 'application/json'}},
+    body: JSON.stringify({{secret: key, id: id, data: data || null}}),
+  }}).catch(function(err){{}});
+}}
+function renderSyncStatus(){{
+  var status = document.getElementById('sync-status');
+  var btn = document.getElementById('sync-activate');
+  if (!status || !btn) return;
+  var key = syncKey();
+  if (key) {{
+    var icsUrl = SYNC_URL + '/favoris.ics?key=' + encodeURIComponent(key);
+    status.innerHTML = 'Synchro activée. Lien à coller dans Google Calendar : <code>' + favEsc(icsUrl) + '</code> '
+      + '<button type="button" id="sync-deactivate">Désactiver ici</button>';
+    status.style.display = '';
+    btn.style.display = 'none';
+  }} else {{
+    status.style.display = 'none';
+    btn.style.display = '';
+  }}
+}}
+function fetchAndMergeFavs(done){{
+  var key = syncKey();
+  if (!SYNC_URL || !key) {{ done(); return; }}
+  fetch(SYNC_URL + '/favoris?key=' + encodeURIComponent(key)).then(function(r){{
+    return r.ok ? r.json() : {{}};
+  }}).then(function(serverFavs){{
+    serverFavs = serverFavs || {{}};
+    // les favoris connus seulement en local (ex. juste après activation de la
+    // synchro sur cet appareil) sont poussés vers le serveur pour ne pas les perdre
+    Object.keys(favs).forEach(function(id){{
+      if (!serverFavs[id]) pushFavori(id, favs[id]);
+    }});
+    favs = Object.assign({{}}, serverFavs, favs);
+    saveFavs(favs);
+    done();
+  }}).catch(function(err){{ done(); }});
+}}
 
 function markFavButtons(){{
   document.querySelectorAll('.fav').forEach(function(b){{
@@ -1333,6 +1420,19 @@ document.body.addEventListener('click', function(ev){{
     renderFavoris();
     return;
   }}
+  if (ev.target.closest('#sync-activate')) {{
+    var code = window.prompt('Code de synchro partagée (donné une seule fois entre les deux personnes concernées) :');
+    if (code) {{
+      setSyncKey(code.trim());
+      fetchAndMergeFavs(function(){{ renderFavoris(); renderSyncStatus(); }});
+    }}
+    return;
+  }}
+  if (ev.target.closest('#sync-deactivate')) {{
+    setSyncKey('');
+    renderSyncStatus();
+    return;
+  }}
   var b = ev.target.closest('.fav');
   if (!b) return;
   ev.preventDefault();
@@ -1340,17 +1440,20 @@ document.body.addEventListener('click', function(ev){{
   var id = b.dataset.id;
   if (favs[id]) {{
     delete favs[id];
+    pushFavori(id, null);
   }} else {{
     favs[id] = {{
       title: b.dataset.title, when: b.dataset.when, place: b.dataset.place,
       url: b.dataset.url, cat: b.dataset.cat, start: b.dataset.start, end: b.dataset.end,
     }};
+    pushFavori(id, favs[id]);
   }}
   saveFavs(favs);
   renderFavoris();
 }});
 
-renderFavoris();
+renderSyncStatus();
+fetchAndMergeFavs(renderFavoris);
 </script>
 </body></html>"""
     Path(path).write_text(page, encoding="utf-8")

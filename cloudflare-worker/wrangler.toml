@@ -1,0 +1,24 @@
+name = "agenda-favoris"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Namespace KV créé avec `wrangler kv namespace create FAVORIS_KV`, puis coller
+# l'id retourné ci-dessous. Doit rester AVANT [vars] : en TOML, tout ce qui suit
+# un en-tête de table appartient à cette table, donc placé après [vars] cette
+# clé serait lue comme une variable d'environnement au lieu d'un vrai binding KV.
+kv_namespaces = [
+  { binding = "FAVORIS_KV", id = "f520c192de04485d9be105803618bfd2" }
+]
+
+# URL publique de agenda.ics une fois publié sur GitHub Pages. Le workflow publie
+# le contenu de sortie/ comme racine du site (upload-pages-artifact path: sortie),
+# donc pas de "/sortie/" dans l'URL.
+[vars]
+AGENDA_ICS_URL = "https://yannaufray.github.io/events-around/agenda.ics"
+
+# SYNC_SECRET n'est PAS défini ici (fichier versionné) : le définir avec
+#   wrangler secret put SYNC_SECRET
+# C'est un code à usage personnel, connu des deux seules personnes autorisées à
+# partager leurs favoris — à leur donner de vive voix/en privé, jamais dans le
+# repo ni dans config.json (voir cloudflare-worker/README.md et le bouton
+# "Activer la synchro partagée" côté site).

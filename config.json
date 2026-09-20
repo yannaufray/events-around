@@ -5,8 +5,11 @@
     "lon": 1.1667
   },
   "rayon_km": 45,
+  "sync_favoris": {
+    "worker_url": "https://agenda-favoris.events-around.workers.dev"
+  },
   "paliers_rayon": [
-    {"nom": "Montignac", "km": 20},
+    {"nom": "Montignac", "km": 15},
     {"nom": "+ Sarlat", "km": 25},
     {"nom": "+ Brive", "km": 35},
     {"nom": "+ Périgueux", "km": 45}

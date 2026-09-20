@@ -3,3 +3,4 @@ sortie/
 __pycache__/
 *.pyc
 .pytest_cache/
+cloudflare-worker/.wrangler/
