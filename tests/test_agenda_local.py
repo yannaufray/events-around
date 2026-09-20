@@ -193,6 +193,12 @@ class TestCategories(unittest.TestCase):
         cat = al.datatourisme_category(["Concert", "CulturalEvent"], "Vide-grenier musical")
         self.assertEqual(cat, "Culture & spectacles")
 
+    def test_datatourisme_conference_falls_back_to_culture(self):
+        # cas réel : DATAtourisme ne porte aucun type précis pour une conférence
+        types = ["EntertainmentAndEvent", "CulturalEvent", "PointOfInterest", "Event"]
+        cat = al.datatourisme_category(types, "Conférence - Quoi de nouveau depuis Guernica ?")
+        self.assertEqual(cat, "Culture & spectacles")
+
     def test_openagenda_employment_events(self):
         cat = al.openagenda_category("OBJECTIF EMPLOI", [], "Mes événements France Travail")
         self.assertEqual(cat, "Emploi & formation")

@@ -86,7 +86,6 @@ CATEGORIES = [
     "Marchés & fêtes",
     "Sport",
     "Enfants & familles",
-    "Emploi & formation",
     "Autre",
 ]
 
@@ -94,10 +93,16 @@ CATEGORIES = [
 def openagenda_category(title, keywords, origin_title):
     text = norm(f"{title} {' '.join(keywords or [])} {origin_title or ''}")
     if any(k in text for k in ("emploi", "travail", "formation", "recrutement", "job dating")):
-        return "Emploi & formation"
+        return "Emploi & formation"  # exclu en amont dans fetch_openagenda, jamais affiché
     if any(k in text for k in ("patrimoine", "chateau", "grotte", "musee", "abbaye", "eglise", "jardin", "visite")):
         return "Patrimoine & visites"
-    if any(k in text for k in ("concert", "festival", "spectacle", "theatre", "danse", "musique", "cinema", "expo")):
+    if any(
+        k in text
+        for k in (
+            "concert", "festival", "spectacle", "theatre", "danse", "musique", "cinema", "expo",
+            "conference", "vernissage", "dedicace", "rencontre", "lecture", "lecture publique", "artiste",
+        )
+    ):
         return "Culture & spectacles"
     if any(k in text for k in ("marche", "fete", "vide grenier", "brocante", "foire")):
         return "Marchés & fêtes"
@@ -143,6 +148,8 @@ def datatourisme_category(types, title=""):
     text = norm(title)
     if any(k in text for k in ("patrimoine", "chateau", "abbaye", "eglise", "musee", "grotte", "visite")):
         return "Patrimoine & visites"
+    if any(k in text for k in ("conference", "vernissage", "dedicace", "rencontre", "lecture", "artiste")):
+        return "Culture & spectacles"
     if types & {"SportsEvent", "SportsCompetition", "Rambling"}:
         return "Sport"
     return "Autre"
@@ -281,6 +288,8 @@ def fetch_openagenda(cfg, w_start, w_end):
         place = ", ".join(x for x in (rec.get("location_name"), rec.get("location_city")) if x)
         url = rec.get("canonicalurl") or ""
         category = openagenda_category(title, rec.get("keywords_fr"), rec.get("originagenda_title"))
+        if category == "Emploi & formation":  # hors sujet pour un agenda de sorties
+            continue
         occ = _occurrences(rec, w_start, w_end)
         if len(occ) > 7:  # exposition / événement quotidien : une seule ligne
             occ = [(occ[0][0], occ[-1][1])]
@@ -794,9 +803,13 @@ def _card(e):
     )
 
 
+def _slug(label):
+    return norm(label).replace(" ", "-")
+
+
 def _section(label, events):
     items = "".join(_card(e) for e in events) or "<li>Rien trouvé.</li>"
-    return f'<section><h2>{html.escape(label)}</h2><ul>{items}</ul></section>'
+    return f'<section><h2 id="{_slug(label)}">{html.escape(label)}</h2><ul>{items}</ul></section>'
 
 
 def _bucketize(events, windows):
@@ -839,10 +852,22 @@ def write_html(events, path, cfg, now, libraries=()):
     label = html.escape(cfg["centre"].get("nom", ""))
     categories = sorted({e.category or "Autre" for e in events} & set(CATEGORIES), key=CATEGORIES.index)
     filter_bar = "".join(
-        f'<label><input type="checkbox" class="catf" value="{html.escape(c)}" checked> {html.escape(c)}</label>'
-        for c in categories
+        f'<button class="catf" data-cat="{html.escape(c)}">{html.escape(c)}</button>' for c in categories
     )
-    filters_html = f'<div class="filters">{filter_bar}</div>' if len(categories) > 1 else ""
+    filters_html = (
+        f'<div class="filters"><button class="catf active" data-cat="__all__">Toutes</button>{filter_bar}</div>'
+        if len(categories) > 1
+        else ""
+    )
+
+    section_defs = list(windows)
+    if buckets["À venir"]:
+        section_defs.append(("À venir", None, None))
+    if libraries:
+        section_defs.append(("Bibliothèques", None, None))
+
+    nav = "".join(f'<a href="#{_slug(lbl)}">{html.escape(lbl)}</a>' for lbl, _, _ in section_defs)
+    nav_html = f'<nav class="jump">{nav}</nav>' if len(section_defs) > 1 else ""
 
     body = "".join(_section(label_, buckets[label_]) for label_, _, _ in windows)
     if buckets["À venir"]:
@@ -850,7 +875,7 @@ def write_html(events, path, cfg, now, libraries=()):
 
     if libraries:
         body += (
-            '<section><h2>Bibliothèques</h2><ul>'
+            '<section><h2 id="bibliotheques">Bibliothèques</h2><ul>'
             + "".join(_library_card(lib) for lib in libraries)
             + "</ul></section>"
         )
@@ -865,22 +890,29 @@ def write_html(events, path, cfg, now, libraries=()):
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorties autour de {label}</title>
 <style>
 body{{font:16px/1.4 system-ui,sans-serif;margin:0 auto;max-width:640px;padding:12px;color:#1a1a1a;background:#fafafa}}
-h1{{font-size:20px}} h2{{font-size:17px;margin:24px 0 8px;border-bottom:1px solid #ddd}}
+h1{{font-size:20px;margin-bottom:4px}} h2{{font-size:17px;margin:24px 0 8px;border-bottom:1px solid #ddd;scroll-margin-top:64px}}
 ul{{list-style:none;padding:0;margin:0}} li{{background:#fff;border:1px solid #e3e3e3;border-radius:8px;padding:10px 12px;margin-bottom:8px}}
 .when{{font-weight:600;color:#0a5}} .t{{margin:2px 0}} .m,.s{{font-size:13px;color:#666}} .a{{font-size:12px;color:#888;margin-top:2px}} a{{color:#0b57d0;text-decoration:none}}
-.filters{{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;margin-top:8px}}
-.filters label{{white-space:nowrap}}
+nav.jump{{position:sticky;top:0;background:#fafafa;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;margin-bottom:4px;z-index:1}}
+nav.jump a{{font-size:13px;background:#eee;border-radius:12px;padding:4px 10px;color:#1a1a1a}}
+.filters{{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;margin:4px 0 8px}}
+.filters button{{border:1px solid #ccc;background:#fff;border-radius:12px;padding:4px 10px;font:inherit;color:inherit;cursor:pointer}}
+.filters button.active{{background:#0a5;border-color:#0a5;color:#fff}}
 li.hidden{{display:none}}
-@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}a{{color:#8ab4f8}}}}
+@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}a{{color:#8ab4f8}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}}}
 </style></head><body><h1>Sorties autour de {label} ({cfg['rayon_km']} km)</h1>
+{nav_html}
 {filters_html}
 {body}{footer}
 <script>
-document.querySelectorAll('.catf').forEach(function(cb){{
-  cb.addEventListener('change', function(){{
-    var active = Array.from(document.querySelectorAll('.catf:checked')).map(function(c){{return c.value}});
+var buttons = document.querySelectorAll('.catf');
+var current = '__all__';
+buttons.forEach(function(b){{
+  b.addEventListener('click', function(){{
+    current = (current === b.dataset.cat) ? '__all__' : b.dataset.cat;
+    buttons.forEach(function(x){{ x.classList.toggle('active', x.dataset.cat === current); }});
     document.querySelectorAll('li[data-cat]').forEach(function(li){{
-      li.classList.toggle('hidden', active.indexOf(li.dataset.cat) === -1);
+      li.classList.toggle('hidden', current !== '__all__' && li.dataset.cat !== current);
     }});
   }});
 }});
