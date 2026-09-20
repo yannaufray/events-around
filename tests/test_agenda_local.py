@@ -170,11 +170,79 @@ class TestDatatourisme(unittest.TestCase):
             source, producer, updated = e.attributions[0]
             self.assertEqual(source, "DATAtourisme")
             self.assertTrue(producer)  # legalName toujours présent sur ces fixtures
-            self.assertTrue(e.url.startswith("https://data.datatourisme.fr/"))
+            # e.url n'est renseignée que si contact.homepage pointe vers une page
+            # dédiée à l'évènement (jamais la fiche technique DATAtourisme brute,
+            # jamais l'accueil générique de l'office de tourisme) ; sinon vide, et
+            # l'UI proposera une recherche Google à la place
+            if e.url:
+                self.assertTrue(e.url.startswith("http"))
+                self.assertNotIn("data.datatourisme.fr", e.url)
+
+    def test_no_contact_homepage_leaves_url_empty(self):
+        # aucune des 3 fixtures n'a de contact.homepage : url doit rester vide plutôt
+        # que de retomber sur la fiche technique ou l'accueil de l'office de tourisme
+        for obj in self.objects:
+            for e in al._datatourisme_object_events(obj, dt(2000, 1, 1), dt(2100, 1, 1)):
+                self.assertEqual(e.url, "")
+
+    def test_contact_homepage_used_when_present(self):
+        obj = dict(self.objects[0])
+        obj["hasContact"] = [{"homepage": ["https://www.sarlat-centreculturel.fr/evenement/the-wackids"]}]
+        out = al._datatourisme_object_events(obj, dt(2000, 1, 1), dt(2100, 1, 1))
+        self.assertTrue(out)
+        for e in out:
+            self.assertEqual(e.url, "https://www.sarlat-centreculturel.fr/evenement/the-wackids")
 
     def test_empty_window_yields_no_events(self):
         out = al._datatourisme_object_events(self.objects[0], dt(1900, 1, 1), dt(1901, 1, 1))
         self.assertEqual(out, [])
+
+
+class TestDatatourismeSitePages(unittest.TestCase):
+    """Résolution d'une page dédiée à l'évènement via le sitemap du site
+    producteur (cf. conversation : lascaux-dordogne.com, sarlat-tourisme.com,
+    vezere-perigord.fr exposent chacun une page par évènement, retrouvable par
+    slug du titre dans leur sitemap — jamais par une fiche DATAtourisme brute ou
+    l'accueil générique de l'office de tourisme)."""
+
+    def test_slugify_matches_real_site_pattern(self):
+        # cas réel : « Nature Sauvage » : Exposition d'estampes d'art ->
+        # nature-sauvage-exposition-destampes-dart (vérifié sur lascaux-dordogne.com
+        # ET sarlat-tourisme.com, qui publient tous deux ce même évènement)
+        self.assertEqual(
+            al._slugify("« Nature Sauvage » : Exposition d'estampes d'art"),
+            "nature-sauvage-exposition-destampes-dart",
+        )
+
+    def setUp(self):
+        self._orig_fetch = al._fetch_sitemap_urls
+        self.addCleanup(setattr, al, "_fetch_sitemap_urls", self._orig_fetch)
+        self.addCleanup(al._DT_SITE_SITEMAPS.pop, "Test OT", None)
+        self.addCleanup(al._agenda_slug_index.cache_clear)
+        al._DT_SITE_SITEMAPS["Test OT"] = ("https://example.org/agenda-sitemap.xml", "/agenda/")
+
+    def _mock_sitemap(self, urls):
+        al._agenda_slug_index.cache_clear()
+        al._fetch_sitemap_urls = lambda url, depth=0: list(urls)
+
+    def test_resolve_event_page_exact_slug(self):
+        self._mock_sitemap(["https://example.org/agenda/nature-sauvage-exposition-destampes-dart/"])
+        got = al._resolve_event_page("Test OT", "« Nature Sauvage » : Exposition d'estampes d'art")
+        self.assertEqual(got, "https://example.org/agenda/nature-sauvage-exposition-destampes-dart/")
+
+    def test_resolve_event_page_prefix_with_id_suffix(self):
+        # cas réel sarlat-tourisme.com : le slug est suivi de -ville-fr-<id>
+        self._mock_sitemap(
+            ["https://example.org/agenda/nature-sauvage-exposition-destampes-dart-sarlat-la-caneda-fr-5698215/"]
+        )
+        got = al._resolve_event_page("Test OT", "« Nature Sauvage » : Exposition d'estampes d'art")
+        self.assertEqual(
+            got,
+            "https://example.org/agenda/nature-sauvage-exposition-destampes-dart-sarlat-la-caneda-fr-5698215/",
+        )
+
+    def test_resolve_event_page_unknown_producer_returns_empty(self):
+        self.assertEqual(al._resolve_event_page("Un OT quelconque", "Peu importe"), "")
 
 
 class TestCategories(unittest.TestCase):
@@ -207,6 +275,24 @@ class TestCategories(unittest.TestCase):
         types = ["EntertainmentAndEvent", "CulturalEvent", "PointOfInterest", "Event"]
         cat = al.datatourisme_category(types, "Conférence - Quoi de nouveau depuis Guernica ?")
         self.assertEqual(cat, "Culture & spectacles")
+
+    def test_datatourisme_nature_outing_not_sport(self):
+        # cas réel observé : DATAtourisme colle le type générique "SportsEvent" à
+        # des sorties nature sans rapport avec le sport (observation du brame du
+        # cerf, week-end découverte...).
+        types = ["EntertainmentAndEvent", "SportsEvent", "CulturalEvent"]
+        cat = al.datatourisme_category(types, "Soirée brame du cerf aux Eyzies")
+        self.assertEqual(cat, "Autre")
+
+    def test_datatourisme_nature_weekend_not_sport(self):
+        types = ["EntertainmentAndEvent", "Rambling", "PointOfInterest"]
+        cat = al.datatourisme_category(types, "Week-end nature, saveurs et détente")
+        self.assertEqual(cat, "Autre")
+
+    def test_datatourisme_prehistoric_site_is_heritage(self):
+        types = ["EntertainmentAndEvent", "SportsEvent", "PointOfInterest"]
+        cat = al.datatourisme_category(types, "Le mois de septembre sur les Sites préhistoriques de la vallée de la Vézère")
+        self.assertEqual(cat, "Patrimoine & visites")
 
     def test_openagenda_employment_events(self):
         cat = al.openagenda_category("OBJECTIF EMPLOI", [], "Mes événements France Travail")

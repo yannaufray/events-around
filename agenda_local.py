@@ -15,8 +15,10 @@ Python 3.9+, aucune dépendance externe.
 """
 import argparse
 import difflib
+import functools
 import hashlib
 import html
+import http.cookiejar as http_cookiejar
 import json
 import math
 import os
@@ -77,6 +79,8 @@ class Event:
     # attribution obligatoire (Licence Ouverte Etalab) : liste de (source, producteur, date de mise à jour "jj/mm/aaaa")
     attributions: list = field(default_factory=list)
     category: str = ""  # catégorie grossière pour les filtres (voir CATEGORIES)
+    description: str = ""  # court descriptif, affiché en détail repliable sur la carte
+    image: str = ""
 
 
 # catégories grossières utilisées pour les filtres de la page HTML
@@ -94,7 +98,14 @@ def openagenda_category(title, keywords, origin_title):
     text = norm(f"{title} {' '.join(keywords or [])} {origin_title or ''}")
     if any(k in text for k in ("emploi", "travail", "formation", "recrutement", "job dating")):
         return "Emploi & formation"  # exclu en amont dans fetch_openagenda, jamais affiché
-    if any(k in text for k in ("patrimoine", "chateau", "grotte", "musee", "abbaye", "eglise", "jardin", "visite")):
+    if any(
+        k in text
+        for k in (
+            "patrimoine", "chateau", "grotte", "musee", "abbaye", "eglise", "jardin", "visite",
+            "prehistorique", "prehistoire", "archeolog", "fouilles", "troglodyte", "abri sous roche",
+            "gisement",
+        )
+    ):
         return "Patrimoine & visites"
     if any(
         k in text
@@ -106,7 +117,10 @@ def openagenda_category(title, keywords, origin_title):
         return "Culture & spectacles"
     if any(k in text for k in ("marche", "fete", "vide grenier", "brocante", "foire")):
         return "Marchés & fêtes"
-    if any(k in text for k in ("sport", "rugby", "petanque", "tournoi", "randonnee")):
+    # note : les sorties nature (balades, brame du cerf...) portent souvent un tag
+    # "randonnee"/"nature" sans être un événement sportif — on exige un terme de
+    # sport non ambigu pour éviter de les classer à tort dans "Sport".
+    if any(k in text for k in ("sport", "rugby", "petanque", "tournoi")):
         return "Sport"
     if any(k in text for k in ("enfant", "jeune public", "famille")):
         return "Enfants & familles"
@@ -150,11 +164,25 @@ def datatourisme_category(types, title=""):
     for key, cat in _DT_CATEGORY_ORDER:
         if key in types:
             return cat
-    if any(k in text for k in ("patrimoine", "chateau", "abbaye", "eglise", "musee", "grotte", "visite")):
+    if any(
+        k in text
+        for k in (
+            "patrimoine", "chateau", "abbaye", "eglise", "musee", "grotte", "visite",
+            "prehistorique", "prehistoire", "archeolog", "fouilles", "troglodyte", "abri sous roche",
+            "gisement",
+        )
+    ):
         return "Patrimoine & visites"
     if any(k in text for k in ("conference", "vernissage", "dedicace", "rencontre", "lecture", "artiste")):
         return "Culture & spectacles"
-    if types & {"SportsEvent", "SportsCompetition", "Rambling"}:
+    if "SportsCompetition" in types:
+        return "Sport"
+    # SportsEvent/Rambling sont des types génériques que DATAtourisme colle aussi à
+    # des sorties nature sans rapport (brame du cerf, balades découverte...) — on
+    # exige un terme de sport explicite dans le titre pour les classer en "Sport".
+    if types & {"SportsEvent", "Rambling"} and any(
+        k in text for k in ("sport", "rugby", "petanque", "tournoi", "course", "match", "competition")
+    ):
         return "Sport"
     return "Autre"
 
@@ -175,11 +203,16 @@ MAIRIE_CATEGORY_MAP = {
 
 
 # ---------------------------------------------------------------- réseau
+# un CookieJar partagé : certains sites (ex. médiathèque de Brive) redirigent en
+# boucle tant qu'aucune requête n'accepte leur cookie de session.
+_HTTP_OPENER = request.build_opener(request.HTTPCookieProcessor(http_cookiejar.CookieJar()))
+
+
 def http_get(url, params=None, timeout=30):
     if params:
         url = url + "?" + parse.urlencode(params)
     req = request.Request(url, headers={"User-Agent": UA})
-    with request.urlopen(req, timeout=timeout) as r:
+    with _HTTP_OPENER.open(req, timeout=timeout) as r:
         return r.read().decode("utf-8", errors="replace")
 
 
@@ -318,22 +351,52 @@ def _fmt_date_fr(iso):
         return ""
 
 
+def _lang_str(v):
+    """Une valeur DATAtourisme @fr/@en est en général une chaîne, mais devient une
+    liste dès qu'un lieu a plusieurs libellés (ex. « Le Vigan-en-Quercy », « Le
+    Vigan ») : on garde le premier dans ce cas."""
+    return v[0] if isinstance(v, list) else (v or "")
+
+
 def _datatourisme_object_events(obj, w_start, w_end):
     label = obj.get("label") or {}
-    title = label.get("@fr") or label.get("@en") or next(iter(label.values()), "")
+    title = _lang_str(label.get("@fr")) or _lang_str(label.get("@en")) or next(iter(label.values()), "")
     if not title:
         return []
     loc = (obj.get("isLocatedAt") or [{}])[0]
     geo = loc.get("geo") or {}
     lat_e, lon_e = geo.get("latitude"), geo.get("longitude")
     addr = (loc.get("address") or [{}])[0]
-    city = ((addr.get("hasAddressCity") or {}).get("label") or {}).get("@fr", "")
+    city = _lang_str(((addr.get("hasAddressCity") or {}).get("label") or {}).get("@fr", ""))
     street = (addr.get("streetAddress") or [""])[0]
     place = ", ".join(x for x in (street, city) if x)
-    producer = (obj.get("hasBeenCreatedBy") or {}).get("legalName", "")
+    creator = obj.get("hasBeenCreatedBy") or {}
+    producer = creator.get("legalName", "")
     updated = _fmt_date_fr(obj.get("lastUpdateDatatourisme") or obj.get("lastUpdate") or "")
     attribution = [("DATAtourisme", producer, updated)]
     category = datatourisme_category(obj.get("type"), title)
+
+    # le homepage de l'office de tourisme producteur (creator.homepage) n'est PAS une
+    # page de l'événement (juste son accueil générique), et la fiche technique
+    # DATAtourisme (obj["uri"]) n'est jamais utile pour un particulier (vocabulaire
+    # RDF brut) : aucun des deux n'est retenu. Seul un contact.homepage pointant vers
+    # une page dédiée à l'évènement l'est ; sinon on laisse le champ vide, _card()
+    # proposera une recherche Google à la place.
+    contact = (obj.get("hasContact") or [{}])[0]
+    url = (contact.get("homepage") or [""])[0]
+
+    desc = (obj.get("hasDescription") or [{}])[0]
+    description = (
+        _lang_str((desc.get("shortDescription") or {}).get("@fr"))
+        or _lang_str((desc.get("description") or {}).get("@fr"))
+        or ""
+    )
+    image = ""
+    for repr_ in obj.get("hasRepresentation") or []:
+        locator = ((repr_.get("hasRelatedResource") or [{}])[0].get("locator") or [""])[0]
+        if locator:
+            image = locator
+            break
 
     occ = []
     for period in obj.get("takesPlaceAt") or []:
@@ -362,16 +425,88 @@ def _datatourisme_object_events(obj, w_start, w_end):
     if not occ:
         return []
     occ.sort()
-    url = obj.get("uri", "")
     if len(occ) > 7:  # exposition / animation quotidienne : une seule ligne
         occ = [(occ[0][0], occ[-1][1])]
         long_running = True
     else:
         long_running = False
     return [
-        Event(title, b, e, place, url, lat_e, lon_e, ["DATAtourisme"], long_running=long_running, attributions=list(attribution), category=category)
+        Event(
+            title, b, e, place, url, lat_e, lon_e, ["DATAtourisme"],
+            long_running=long_running, attributions=list(attribution), category=category,
+            description=description, image=image,
+        )
         for b, e in occ
     ]
+
+
+def _slugify(text):
+    text = re.sub(r"[\"'’«»]", "", text)
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
+
+
+# sites d'offices de tourisme identifiés (à la main, cf. conversation) dont le
+# sitemap expose une page dédiée par évènement, sous une URL commençant par le
+# slug du titre (ex : /agenda/{slug}/, ou /agenda/{slug}-{ville}-fr-{id}/) : on
+# construit un index slug -> URL une fois par site et par exécution, bien plus
+# fiable qu'une URL devinée à l'aveugle ou que la fiche technique DATAtourisme.
+_DT_SITE_SITEMAPS = {
+    "OT Lascaux Dordogne Vallée Vézère": ("https://www.lascaux-dordogne.com/agenda-sitemap.xml", "/agenda/"),
+    "Office de Tourisme Sarlat Périgord Noir": (
+        "https://www.sarlat-tourisme.com/sitemap.xml/",
+        "/je-selectionne-mes-activites/agenda/",
+    ),
+    "Vézère Périgord Noir": (
+        "https://www.vezere-perigord.fr/sitemap.xml",
+        "/l-agenda-des-fetes-et-manifestations/",
+    ),
+}
+
+
+def _fetch_sitemap_urls(url, depth=0):
+    try:
+        req = request.Request(url, headers={"User-Agent": UA})
+        with request.urlopen(req, timeout=10) as r:
+            text = r.read().decode("utf-8", "replace")
+    except Exception:
+        return []
+    locs = re.findall(r"<loc>([^<]+)</loc>", text)
+    if depth == 0 and "<sitemapindex" in text:
+        urls = []
+        for sub in locs:
+            urls += _fetch_sitemap_urls(sub, depth=1)
+        return urls
+    return locs
+
+
+@functools.lru_cache(maxsize=None)
+def _agenda_slug_index(producer):
+    """slug (dernier segment de l'URL, avant un éventuel -ville-fr-id) -> URL
+    complète, pour les évènements de ce producteur DATAtourisme."""
+    cfg = _DT_SITE_SITEMAPS.get(producer)
+    if not cfg:
+        return {}
+    root, marker = cfg
+    index = {}
+    for u in _fetch_sitemap_urls(root):
+        if marker not in u:
+            continue
+        slug = u.rstrip("/").rsplit("/", 1)[-1]
+        if slug and slug not in index:
+            index[slug] = u
+    return index
+
+
+def _resolve_event_page(producer, title):
+    index = _agenda_slug_index(producer)
+    if not index:
+        return ""
+    slug = _slugify(title)
+    if slug in index:
+        return index[slug]
+    return next((u for k, u in index.items() if k.startswith(slug + "-")), "")
 
 
 def fetch_datatourisme(cfg, w_start, w_end):
@@ -379,7 +514,10 @@ def fetch_datatourisme(cfg, w_start, w_end):
     if not key:
         raise RuntimeError("DATATOURISME_KEY absente (variable d'environnement ou .env)")
     lat0, lon0, radius = cfg["centre"]["lat"], cfg["centre"]["lon"], cfg["rayon_km"]
-    fields = "uuid,uri,label,type,takesPlaceAt,isLocatedAt,hasBeenCreatedBy,lastUpdateDatatourisme"
+    fields = (
+        "uuid,uri,label,type,takesPlaceAt,isLocatedAt,hasBeenCreatedBy,lastUpdateDatatourisme,"
+        "hasContact,hasDescription,hasRepresentation"
+    )
     url = DATATOURISME_API + "/entertainmentAndEvent?" + parse.urlencode(
         {"geo_distance": f"{lat0},{lon0},{radius}km", "page_size": 250, "fields": fields}
     )
@@ -394,6 +532,10 @@ def fetch_datatourisme(cfg, w_start, w_end):
         if not url:
             break
         time.sleep(0.3)
+    for e in events:
+        if not e.url and e.attributions:
+            producer = e.attributions[0][1]
+            e.url = _resolve_event_page(producer, e.title)
     return events
 
 
@@ -608,31 +750,52 @@ def fetch_web_pages(cfg, w_start, w_end):
 
 # ---------------------------------------------------------------- source 4 : horaires des bibliothèques
 _LIB_DAY_LINE = re.compile(r"^([A-ZÀ-Ü][\w& à-ü-]*?)\s*:\s*(.+)$")
+# variante sans « : » (ex. site de Sarlat : « Mardi 12h30 – 18h30 »)
+_LIB_DAY_LINE_BARE = re.compile(
+    r"^(Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche)\s+(\d{1,2}\s*h.*)$", re.I
+)
 
 
 def parse_library_hours(page):
-    """Cherche un bloc « Horaires » suivi de lignes « Jour(s) : plage(s) »."""
+    """Cherche un bloc « Horaires » suivi de lignes « Jour(s) : plage(s) » (ou, à
+    défaut, « Jour plage » sans « : », variante rencontrée sur d'autres sites)."""
     tp = _TextLines()
     tp.feed(page)
     lines = [re.sub(r"\s+", " ", l).strip() for l in tp.lines]
     idx = [i for i, l in enumerate(lines) if l]
-    horaires = []
     for pos, i in enumerate(idx):
-        if norm(lines[i]) != "horaires":
+        if "horaires" not in norm(lines[i]):
             continue
+        horaires = []
         for j in idx[pos + 1:]:
-            m = _LIB_DAY_LINE.match(lines[j])
+            m = _LIB_DAY_LINE.match(lines[j]) or _LIB_DAY_LINE_BARE.match(lines[j])
             if not m:
                 break
             horaires.append((m.group(1).strip(), m.group(2).strip()))
-        break
-    return horaires
+        if horaires:
+            return horaires
+    return []
+
+
+def _place_distance(cfg, entry):
+    """None si le lieu n'a pas de lat/lon déclarée (source locale, toujours gardée).
+    Sinon la distance au centre — le lieu est écarté s'il dépasse le rayon maximal
+    de récupération (cfg['rayon_km']) ; en-dessous, l'affichage effectif dépend du
+    palier de rayon choisi dans l'interface (voir write_html / paliers_rayon)."""
+    if "lat" not in entry or "lon" not in entry:
+        return "keep", None
+    lat0, lon0, radius = cfg["centre"]["lat"], cfg["centre"]["lon"], cfg["rayon_km"]
+    d = haversine(lat0, lon0, entry["lat"], entry["lon"])
+    return ("keep" if d <= radius else "drop"), d
 
 
 def fetch_library_hours(cfg):
     """Bibliothèques : ce sont des lieux (horaires fixes), pas des événements datés."""
     out = []
     for lib in cfg.get("bibliotheques", []):
+        keep, dist = _place_distance(cfg, lib)
+        if keep == "drop":
+            continue
         try:
             horaires = parse_library_hours(http_get(lib["url"]))
         except Exception as e:
@@ -640,7 +803,7 @@ def fetch_library_hours(cfg):
             continue
         if horaires:
             lines = [f"{jour} : {heures}" for jour, heures in horaires]
-            out.append({"nom": lib["nom"], "url": lib["url"], "lines": lines, "links": []})
+            out.append({"nom": lib["nom"], "url": lib["url"], "lines": lines, "links": [], "distance": dist})
     return out
 
 
@@ -678,6 +841,15 @@ def parse_cinema_info(page):
 def fetch_cinema_info(cfg):
     out = []
     for cine in cfg.get("cinemas", []):
+        keep, dist = _place_distance(cfg, cine)
+        if keep == "drop":
+            continue
+        if "lines" in cine:
+            # certains sites (multiplexes, JS côté client) ne se prêtent pas au
+            # parsing : infos saisies à la main plutôt qu'une carte vide.
+            out.append({"nom": cine["nom"], "url": cine["url"], "lines": cine["lines"],
+                        "links": cine.get("links", []), "distance": dist})
+            continue
         try:
             info = parse_cinema_info(http_get(cine["url"]))
         except Exception as e:
@@ -692,7 +864,7 @@ def fetch_cinema_info(cfg):
         elif info.get("programme_text"):
             lines.append(info["programme_text"])
         if lines or links:
-            out.append({"nom": cine["nom"], "url": cine["url"], "lines": lines, "links": links})
+            out.append({"nom": cine["nom"], "url": cine["url"], "lines": lines, "links": links, "distance": dist})
     return out
 
 
@@ -730,6 +902,8 @@ def dedupe(events):
                     dup.attributions.append(att)
             dup.url = dup.url or ev.url
             dup.place = dup.place or ev.place
+            dup.description = dup.description or ev.description
+            dup.image = dup.image or ev.image
             if not dup.category or dup.category == "Autre":
                 dup.category = ev.category or dup.category
             if dup.lat is None:
@@ -846,8 +1020,6 @@ def _fmt_when(e):
 
 def _card(e):
     title = html.escape(e.title)
-    if e.url:
-        title = f'<a href="{html.escape(e.url)}">{title}</a>'
     meta = [x for x in (html.escape(e.place), f"{e.distance:.0f} km" if e.distance is not None else "") if x]
     attr_lines = "".join(
         f'<div class="a">Source : {html.escape(producer)}, mis à jour le {html.escape(updated)}</div>'
@@ -855,9 +1027,29 @@ def _card(e):
         if producer
     )
     cat = html.escape(e.category or "Autre")
+    dist_attr = f' data-dist="{e.distance:.0f}"' if e.distance is not None else ""
+    header = (
+        f'<div class="when">{_fmt_when(e)}</div><div class="t">{title}</div>'
+        f'<div class="m">{" · ".join(meta)}</div><div class="s">{html.escape(", ".join(e.sources))}</div>{attr_lines}'
+    )
+    if e.url and not e.description and not e.image:
+        header = header.replace(title, f'<a href="{html.escape(e.url)}">{title}</a>', 1)
+        return f'<li data-cat="{cat}"{dist_attr}>{header}</li>'
+    detail = ""
+    if e.image:
+        detail += f'<img src="{html.escape(e.image)}" alt="" loading="lazy">'
+    if e.description:
+        detail += f'<div class="d">{html.escape(e.description)}</div>'
+    if e.url:
+        detail += f'<div><a class="more" href="{html.escape(e.url)}">Plus d\'infos</a></div>'
+    else:
+        # pas de page dédiée à l'évènement : une recherche Google sur le titre + le
+        # lieu est toujours utile pour un particulier, contrairement à la fiche
+        # technique DATAtourisme (vocabulaire RDF brut, jamais utile en pratique)
+        q = parse.quote(f"{e.title} {e.place}".strip())
+        detail += f'<div><a class="more" href="https://www.google.com/search?q={q}">Rechercher en ligne</a></div>'
     return (
-        f'<li data-cat="{cat}"><div class="when">{_fmt_when(e)}</div><div class="t">{title}</div>'
-        f'<div class="m">{" · ".join(meta)}</div><div class="s">{html.escape(", ".join(e.sources))}</div>{attr_lines}</li>'
+        f'<li data-cat="{cat}"{dist_attr}><details><summary>{header}</summary>{detail}</details></li>'
     )
 
 
@@ -895,10 +1087,13 @@ def _place_card(place):
     if place.get("url"):
         name = f'<a href="{html.escape(place["url"])}">{name}</a>'
     lines = "".join(f"<div>{html.escape(l)}</div>" for l in place.get("lines", []))
+    if place.get("distance") is not None:
+        lines += f'<div>{place["distance"]:.0f} km</div>'
     links = "".join(
         f'<div><a href="{html.escape(u)}">{html.escape(lbl)}</a></div>' for lbl, u in place.get("links", [])
     )
-    return f'<li><div class="t">{name}</div><div class="m">{lines}{links}</div></li>'
+    dist_attr = f' data-dist="{place["distance"]:.0f}"' if place.get("distance") is not None else ""
+    return f'<li{dist_attr}><div class="t">{name}</div><div class="m">{lines}{links}</div></li>'
 
 
 def write_html(events, path, cfg, now, lieux=()):
@@ -921,6 +1116,19 @@ def write_html(events, path, cfg, now, lieux=()):
         if len(categories) > 1
         else ""
     )
+
+    # paliers de rayon : boutons cumulatifs (chacun inclut les précédents), triés du
+    # plus petit au plus grand ; le premier est actif par défaut pour ne rien changer
+    # à l'affichage habituel tant qu'on ne clique pas.
+    paliers = sorted(cfg.get("paliers_rayon", []), key=lambda p: p["km"])
+    if len(paliers) > 1:
+        dist_bar = "".join(
+            f'<button class="distf{" active" if i == 0 else ""}" data-maxdist="{p["km"]}">'
+            f'{html.escape(p["nom"])} (≤ {p["km"]} km)</button>'
+            for i, p in enumerate(paliers)
+        )
+        filters_html += f'<div class="filters">{dist_bar}</div>'
+    default_km = paliers[0]["km"] if paliers else cfg["rayon_km"]
 
     section_defs = list(windows)
     if buckets["À venir"]:
@@ -954,28 +1162,49 @@ def write_html(events, path, cfg, now, lieux=()):
 body{{font:16px/1.4 system-ui,sans-serif;margin:0 auto;max-width:640px;padding:12px;color:#1a1a1a;background:#fafafa}}
 h1{{font-size:20px;margin-bottom:4px}} h2{{font-size:17px;margin:24px 0 8px;border-bottom:1px solid #ddd;scroll-margin-top:64px}}
 ul{{list-style:none;padding:0;margin:0}} li{{background:#fff;border:1px solid #e3e3e3;border-radius:8px;padding:10px 12px;margin-bottom:8px}}
-.when{{font-weight:600;color:#0a5}} .t{{margin:2px 0}} .m,.s{{font-size:13px;color:#666}} .a{{font-size:12px;color:#888;margin-top:2px}} a{{color:#0b57d0;text-decoration:none}}
+.when{{font-weight:600;color:#0a5}} .t{{margin:2px 0;font-weight:600;color:#1a1a1a}} .m,.s{{font-size:13px;color:#666}} .a{{font-size:12px;color:#888;margin-top:2px}} a{{color:#0a5;text-decoration:none}}
+.t a{{color:inherit;text-decoration:none}} .t a::after{{content:" ↗";font-size:.75em;opacity:.55}}
+summary{{cursor:pointer;list-style:none;position:relative;padding-right:20px}} summary::-webkit-details-marker{{display:none}}
+summary::after{{content:"›";position:absolute;top:0;right:0;font-size:20px;line-height:1;color:#999;transition:transform .15s}}
+details[open] summary::after{{transform:rotate(90deg)}}
+details img{{width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-top:8px}}
+details .d{{font-size:14px;margin-top:6px;color:#333}}
+.more{{display:inline-block;margin-top:8px;font-size:13px;font-weight:600;color:#0a5;border:1px solid #0a5;border-radius:12px;padding:3px 10px}}
 nav.jump{{position:sticky;top:0;background:#fafafa;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;margin-bottom:4px;z-index:1}}
 nav.jump a{{font-size:13px;background:#eee;border-radius:12px;padding:4px 10px;color:#1a1a1a}}
 .filters{{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;margin:4px 0 8px}}
 .filters button{{border:1px solid #ccc;background:#fff;border-radius:12px;padding:4px 10px;font:inherit;color:inherit;cursor:pointer}}
 .filters button.active{{background:#0a5;border-color:#0a5;color:#fff}}
 li.hidden{{display:none}}
-@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}a{{color:#8ab4f8}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}}}
-</style></head><body><h1>Sorties autour de {label} ({cfg['rayon_km']} km)</h1>
+@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}}}
+</style></head><body><h1>Sorties autour de {label} ({default_km} km)</h1>
 {nav_html}
 {filters_html}
 {body}{footer}
 <script>
-var buttons = document.querySelectorAll('.catf');
-var current = '__all__';
-buttons.forEach(function(b){{
+var catButtons = document.querySelectorAll('.catf');
+var distButtons = document.querySelectorAll('.distf');
+var currentCat = '__all__';
+var currentDist = {default_km};
+function applyFilters(){{
+  document.querySelectorAll('li').forEach(function(li){{
+    var catOk = currentCat === '__all__' || !li.dataset.cat || li.dataset.cat === currentCat;
+    var distOk = !li.dataset.dist || Number(li.dataset.dist) <= currentDist;
+    li.classList.toggle('hidden', !(catOk && distOk));
+  }});
+}}
+catButtons.forEach(function(b){{
   b.addEventListener('click', function(){{
-    current = (current === b.dataset.cat) ? '__all__' : b.dataset.cat;
-    buttons.forEach(function(x){{ x.classList.toggle('active', x.dataset.cat === current); }});
-    document.querySelectorAll('li[data-cat]').forEach(function(li){{
-      li.classList.toggle('hidden', current !== '__all__' && li.dataset.cat !== current);
-    }});
+    currentCat = (currentCat === b.dataset.cat) ? '__all__' : b.dataset.cat;
+    catButtons.forEach(function(x){{ x.classList.toggle('active', x.dataset.cat === currentCat); }});
+    applyFilters();
+  }});
+}});
+distButtons.forEach(function(b){{
+  b.addEventListener('click', function(){{
+    currentDist = Number(b.dataset.maxdist);
+    distButtons.forEach(function(x){{ x.classList.toggle('active', x === b); }});
+    applyFilters();
   }});
 }});
 </script>

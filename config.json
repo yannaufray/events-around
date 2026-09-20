@@ -4,7 +4,13 @@
     "lat": 45.0667,
     "lon": 1.1667
   },
-  "rayon_km": 20,
+  "rayon_km": 45,
+  "paliers_rayon": [
+    {"nom": "Montignac", "km": 20},
+    {"nom": "+ Sarlat", "km": 25},
+    {"nom": "+ Brive", "km": 35},
+    {"nom": "+ Périgueux", "km": 45}
+  ],
   "jours": 30,
   "dossier_sortie": "sortie",
   "sources": {
@@ -38,12 +44,51 @@
     {
       "nom": "Bibliothèque Jacques Cabanel (Montignac)",
       "url": "https://ville-montignac.com/culture/bibliotheque"
+    },
+    {
+      "nom": "Médiathèque intercommunale (Sarlat-la-Canéda)",
+      "url": "https://sarlat.fr/sortir-et-bouger/vie-culturelle/la-mediatheque-intercommunale/",
+      "lat": 44.8896,
+      "lon": 1.2149
+    },
+    {
+      "nom": "Médiathèque (Brive-la-Gaillarde)",
+      "url": "https://mediatheque.brive.fr/le-reseau/horaires-et-acces",
+      "lat": 45.1591,
+      "lon": 1.5336
+    },
+    {
+      "nom": "Médiathèque Pierre Fanlac (Périgueux)",
+      "url": "https://www.perigueux-mediatheque.fr/default/acces-horaires.aspx?_lg=fr-FR",
+      "lat": 45.1848,
+      "lon": 0.7211
     }
   ],
   "cinemas": [
     {
       "nom": "Cinéma Le Vox (Montignac)",
       "url": "https://ville-montignac.com/culture/cinema-le-vox"
+    },
+    {
+      "nom": "Cinéma Rex (Sarlat-la-Canéda)",
+      "url": "https://www.cinerex.fr/",
+      "lat": 44.8886,
+      "lon": 1.2131,
+      "lines": ["8 avenue Thiers, 24200 Sarlat-la-Canéda", "Tél. : 05 53 31 04 39"]
+    },
+    {
+      "nom": "Cinéma Rex (Brive-la-Gaillarde)",
+      "url": "http://cinema-rex-brive.fr/",
+      "lat": 45.1615,
+      "lon": 1.5280,
+      "lines": ["3 boulevard du Général Koenig, 19100 Brive-la-Gaillarde", "Tél. : 05 55 22 41 69"]
+    },
+    {
+      "nom": "CGR Périgueux",
+      "url": "https://www.cgrcinemas.fr/cinema/p0485-cgr-perigueux/",
+      "lat": 45.1875,
+      "lon": 0.7205,
+      "lines": ["Place Francheville, 24000 Périgueux", "Tél. : 05 53 03 92 91"]
     }
   ]
 }
