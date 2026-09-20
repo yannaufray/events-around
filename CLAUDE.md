@@ -57,8 +57,8 @@ list and keyword sets (`_SPORT_KEYWORDS`, `_NATURE_KEYWORDS`, etc.) — when add
 classification, match the same category vocabulary so cross-source dedupe and HTML filtering stay
 consistent.
 
-Time windows (`weekend_window`, `next_weekend_window`, `wednesday_window`) are computed relative to
-`datetime.now(TZ)` with `TZ = ZoneInfo("Europe/Paris")` — the HTML's "this weekend"/"Wednesday" sections
+Time windows (`weekend_window`, `next_weekend_window`, `week_window`) are computed relative to
+`datetime.now(TZ)` with `TZ = ZoneInfo("Europe/Paris")` — the HTML's "this weekend"/"this week" sections
 shift day-to-day, which is why the workflow runs on a daily cron rather than only on push.
 
 ## Workflow expectations

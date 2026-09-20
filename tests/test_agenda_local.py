@@ -73,6 +73,20 @@ class TestLongRunning(unittest.TestCase):
         self.assertFalse(out[0].long_running)
         self.assertTrue(out[1].long_running)
 
+    def test_marks_weekend_event_spanning_two_days(self):
+        # vide-grenier samedi 9h -> dimanche 18h : 33h, chevauche deux dates mais
+        # reste bien en-dessous de l'ancien seuil de 2 jours pleins.
+        vide_grenier = al.Event("Vide-grenier", dt(2026, 6, 6, 9), dt(2026, 6, 7, 18))
+        out = al.mark_long_running([vide_grenier])
+        self.assertTrue(out[0].long_running)
+
+    def test_keeps_short_overnight_event_as_single_date(self):
+        # concert finissant après minuit : chevauche deux dates mais dure quelques
+        # heures à peine, ne doit pas passer en « jusqu'au ... ».
+        concert = al.Event("Concert nocturne", dt(2026, 6, 6, 22), dt(2026, 6, 7, 1))
+        out = al.mark_long_running([concert])
+        self.assertFalse(out[0].long_running)
+
 
 class TestIcs(unittest.TestCase):
     def test_write_and_reparse_roundtrip(self, tmp_path=None):
@@ -366,18 +380,21 @@ class TestWeekendWindow(unittest.TestCase):
         self.assertEqual(next_start.date(), dt(2026, 10, 2).date())
 
 
-class TestWednesdayWindow(unittest.TestCase):
-    def test_from_monday(self):
+class TestWeekWindow(unittest.TestCase):
+    def test_spans_between_the_two_weekends(self):
         monday = dt(2026, 9, 21, 8, 0)
-        start, end = al.wednesday_window(monday)
-        self.assertEqual(start.date(), dt(2026, 9, 23).date())
-        self.assertEqual((start.hour, start.minute), (0, 0))
-        self.assertEqual((end.hour, end.minute), (23, 59))
+        start, end = al.week_window(monday)
+        _, wk_end = al.weekend_window(monday)
+        next_start, _ = al.next_weekend_window(monday)
+        self.assertEqual(start, wk_end + timedelta(seconds=1))
+        self.assertEqual(end, next_start)
+        self.assertEqual(start.weekday(), 0)  # lundi
 
-    def test_on_wednesday_keeps_today(self):
-        wednesday = dt(2026, 9, 23, 18, 0)
-        start, _ = al.wednesday_window(wednesday)
-        self.assertEqual(start.date(), wednesday.date())
+    def test_never_empty_even_from_within_the_weekend(self):
+        saturday = dt(2026, 9, 26, 9, 0)
+        start, end = al.week_window(saturday)
+        self.assertLess(start, end)
+        self.assertEqual(start.weekday(), 0)  # lundi
 
 
 class TestBucketize(unittest.TestCase):
@@ -387,11 +404,11 @@ class TestBucketize(unittest.TestCase):
         e_far = al.Event("C", dt(2026, 11, 1, 10), dt(2026, 11, 1, 12))
         windows = [
             ("Ce week-end", dt(2026, 9, 25, 17), dt(2026, 9, 27, 23, 59)),
-            ("Mercredi", dt(2026, 9, 30, 0), dt(2026, 9, 30, 23, 59)),
+            ("Cette semaine", dt(2026, 9, 30, 0), dt(2026, 9, 30, 23, 59)),
         ]
         buckets = al._bucketize([e_weekend, e_wed, e_far], windows)
         self.assertEqual(buckets["Ce week-end"], [e_weekend])
-        self.assertEqual(buckets["Mercredi"], [e_wed])
+        self.assertEqual(buckets["Cette semaine"], [e_wed])
         self.assertEqual(buckets["À venir"], [e_far])
 
 

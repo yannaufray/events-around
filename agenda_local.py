@@ -890,10 +890,16 @@ def fetch_cinema_info(cfg):
 
 # ---------------------------------------------------------------- fusion
 def mark_long_running(events):
-    """Une occurrence unique mais très longue (expo, saison) s'affiche comme les
-    événements collapsés à la source : une seule ligne « jusqu'au ... »."""
+    """Une occurrence unique mais très longue (expo, saison, ou événement sur plusieurs
+    jours comme un vide-grenier samedi ET dimanche) s'affiche comme les événements
+    collapsés à la source : une seule ligne « jusqu'au ... ». Seuil à 20h plutôt qu'à
+    2 jours pleins : un vide-grenier samedi 9h → dimanche 18h ne dure que 33h mais
+    chevauche bien deux dates, et sans ce marquage l'affichage ne montrerait que
+    « samedi » même le dimanche, laissant croire à tort que l'événement est passé. Un
+    concert finissant peu après minuit (quelques heures à peine) reste, lui, sous ce
+    seuil et continue de s'afficher avec sa seule date de début."""
     for e in events:
-        if not e.long_running and (e.end - e.start) > timedelta(days=2):
+        if not e.long_running and (e.end - e.start) > timedelta(hours=20):
             e.long_running = True
     return events
 
@@ -963,13 +969,15 @@ def next_weekend_window(now):
     return weekend_window(this_end + timedelta(days=1))
 
 
-def wednesday_window(now):
-    """Le prochain mercredi (aujourd'hui inclus si on est déjà mercredi), journée entière."""
-    days_ahead = (2 - now.weekday()) % 7
-    target = now + timedelta(days=days_ahead)
-    start = target.replace(hour=0, minute=0, second=0, microsecond=0)
-    end = target.replace(hour=23, minute=59, second=59, microsecond=0)
-    return start, end
+def week_window(now):
+    """La semaine entre 'ce week-end' (weekend_window) et 'le week-end suivant'
+    (next_weekend_window) : toujours une semaine pleine et non vide, quel que soit
+    le jour courant — contrairement à une fenêtre "reste de la semaine avant le
+    prochain week-end", qui elle peut être vide (si on est déjà dans le week-end) ou
+    partielle (si on est en milieu de semaine)."""
+    _, wk_end = weekend_window(now)
+    next_start, _ = next_weekend_window(now)
+    return wk_end + timedelta(seconds=1), next_start
 
 
 # ---------------------------------------------------------------- sorties
@@ -1143,51 +1151,71 @@ def _place_card(place):
 
 def write_html(events, path, cfg, now, lieux=()):
     wk_start, wk_end = weekend_window(now)
-    wed_start, wed_end = wednesday_window(now)
+    week_start, week_end = week_window(now)
     next_wk_start, next_wk_end = next_weekend_window(now)
-    windows = sorted(
-        [("Ce week-end", wk_start, wk_end), ("Mercredi", wed_start, wed_end), ("Week-end suivant", next_wk_start, next_wk_end)],
-        key=lambda w: w[1],
-    )
+    windows = [
+        ("Ce week-end", wk_start, wk_end),
+        ("La semaine prochaine", week_start, week_end),
+        ("Week-end suivant", next_wk_start, next_wk_end),
+    ]
+    # "Cette semaine" (le reste de la semaine en cours, avant le prochain week-end) n'a
+    # de sens que si on n'est pas déjà dans ce week-end — sinon la fenêtre serait vide.
+    if now < wk_start:
+        windows.append(("Cette semaine", now, wk_start))
+    windows.sort(key=lambda w: w[1])
     buckets = _bucketize(events, windows)
 
     label = html.escape(cfg["centre"].get("nom", ""))
-    categories = sorted({e.category or "Autre" for e in events} & set(CATEGORIES), key=CATEGORIES.index)
-    filter_bar = "".join(
-        f'<button class="catf" data-cat="{html.escape(c)}">{html.escape(c)}</button>' for c in categories
-    )
-    filters_html = (
-        f'<div class="filters"><button class="catf active" data-cat="__all__">Toutes</button>{filter_bar}</div>'
-        if len(categories) > 1
-        else ""
-    )
 
-    # paliers de rayon : boutons cumulatifs (chacun inclut les précédents), triés du
-    # plus petit au plus grand ; le premier est actif par défaut pour ne rien changer
-    # à l'affichage habituel tant qu'on ne clique pas.
-    paliers = sorted(cfg.get("paliers_rayon", []), key=lambda p: p["km"])
-    if len(paliers) > 1:
-        dist_bar = "".join(
-            f'<button class="distf{" active" if i == 0 else ""}" data-maxdist="{p["km"]}"'
-            f' data-include="{html.escape(",".join(norm(v) for v in p.get("inclure", [])))}">'
-            f'{html.escape(p["nom"])}'
-            + ("" if p.get("inclure") else f' (≤ {p["km"]} km)')
-            + "</button>"
-            for i, p in enumerate(paliers)
-        )
-        filters_html += f'<div class="filters">{dist_bar}</div>'
-    default_palier = paliers[0] if paliers else None
-    default_km = default_palier["km"] if default_palier and not default_palier.get("inclure") else cfg["rayon_km"]
-    h1_suffix = "" if default_palier and default_palier.get("inclure") else f"(≤ {default_km} km)"
-
-    section_defs = [("Favoris", None, None)] + list(windows)
+    # la section Favoris a son propre onglet (voir tabs_html plus bas), elle ne
+    # fait donc plus partie de ce menu qui ne couvre que l'onglet Découvrir.
+    section_defs = list(windows)
     if buckets["À venir"]:
         section_defs.append(("À venir", None, None))
     if lieux:
         section_defs.append(("Lieux culturels", None, None))
 
-    nav = "".join(f'<a href="#{_slug(lbl)}">{html.escape(lbl)}</a>' for lbl, _, _ in section_defs)
-    nav_html = f'<nav class="jump">{nav}</nav>' if len(section_defs) > 1 else ""
+    # Trois menus déroulants alignés (aller à / catégorie / rayon) plutôt que des
+    # rangées de pastilles empilées : un seul style, une seule hauteur de ligne,
+    # aucun scroll horizontal à gérer. Le menu "aller à" scrolle vers la section
+    # puis se réinitialise (voir JS plus bas) : c'est une action, pas un filtre.
+    jump_options = "".join(
+        f'<option value="{_slug(lbl)}">{html.escape(lbl)}</option>' for lbl, _, _ in section_defs
+    )
+    jump_select = (
+        f'<select class="selfilter" id="jumpsel"><option value="" selected>Aller à…</option>{jump_options}</select>'
+        if len(section_defs) > 1
+        else ""
+    )
+
+    categories = sorted({e.category or "Autre" for e in events} & set(CATEGORIES), key=CATEGORIES.index)
+    cat_options = "".join(f'<option value="{html.escape(c)}">{html.escape(c)}</option>' for c in categories)
+    cat_select = (
+        f'<select class="selfilter" id="catsel"><option value="__all__" selected>Toutes les catégories</option>{cat_options}</select>'
+        if len(categories) > 1
+        else ""
+    )
+
+    # paliers de rayon : options cumulatives (chacune inclut les précédentes), triées du
+    # plus petit au plus grand ; la première est active par défaut pour ne rien changer
+    # à l'affichage habituel tant qu'on ne touche pas au menu.
+    paliers = sorted(cfg.get("paliers_rayon", []), key=lambda p: p["km"])
+    dist_select = ""
+    if len(paliers) > 1:
+        dist_options = "".join(
+            f'<option value="{p["km"]}" data-include="{html.escape(",".join(norm(v) for v in p.get("inclure", [])))}"'
+            + (" selected" if i == 0 else "")
+            + f'>{html.escape(p["nom"])}'
+            + ("" if p.get("inclure") else f' (≤ {p["km"]} km)')
+            + "</option>"
+            for i, p in enumerate(paliers)
+        )
+        dist_select = f'<select class="selfilter" id="distsel">{dist_options}</select>'
+    default_palier = paliers[0] if paliers else None
+    default_km = default_palier["km"] if default_palier and not default_palier.get("inclure") else cfg["rayon_km"]
+    h1_suffix = "" if default_palier and default_palier.get("inclure") else f"(≤ {default_km} km)"
+
+    filters_html = f'<div class="filterbar">{jump_select}{cat_select}{dist_select}</div>'
 
     # l'URL du worker n'est pas sensible (juste "où" envoyer), mais le code d'accès
     # partagé, lui, ne doit JAMAIS être écrit dans cette page publique — voir la
@@ -1212,7 +1240,7 @@ def write_html(events, path, cfg, now, lieux=()):
         f"</section>"
     )
 
-    body = favoris_html + "".join(_section(label_, buckets[label_]) for label_, _, _ in windows)
+    body = "".join(_section(label_, buckets[label_]) for label_, _, _ in windows)
     if buckets["À venir"]:
         body += _section("À venir", buckets["À venir"])
 
@@ -1222,6 +1250,23 @@ def write_html(events, path, cfg, now, lieux=()):
             + "".join(_place_card(p) for p in lieux)
             + "</ul></section>"
         )
+
+    # deux onglets pour ne pas tout empiler en haut de page : Découvrir (nav
+    # d'ancres, filtres, sections datées) et Mes favoris (liste + synchro) ; le
+    # dernier onglet consulté est mémorisé (localStorage) pour rouvrir directement
+    # dessus au prochain chargement.
+    tabs_html = (
+        '<div class="tabs">'
+        '<button type="button" class="tabbtn" data-tab="decouvrir">Découvrir</button>'
+        '<button type="button" class="tabbtn" data-tab="favoris">Mes favoris</button>'
+        "</div>"
+        '<div id="tab-decouvrir" class="tabpanel">'
+        f"{filters_html}{body}"
+        "</div>"
+        '<div id="tab-favoris" class="tabpanel" hidden>'
+        f"{favoris_html}"
+        "</div>"
+    )
 
     has_datatourisme = any(src == "DATAtourisme" for e in events for src, _, _ in e.attributions)
     footer = f'<p class="s">Mis à jour le {now:%d/%m/%Y à %H:%M}</p>'
@@ -1243,29 +1288,43 @@ details[open] summary::after{{transform:rotate(90deg)}}
 details img{{width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-top:8px}}
 details .d{{font-size:14px;margin-top:6px;color:#333}}
 .more{{display:inline-block;margin-top:8px;font-size:13px;font-weight:600;color:#0a5;border:1px solid #0a5;border-radius:12px;padding:3px 10px}}
-nav.jump{{position:sticky;top:0;background:#fafafa;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;margin-bottom:4px;z-index:1}}
-nav.jump a{{font-size:13px;background:#eee;border-radius:12px;padding:4px 10px;color:#1a1a1a}}
-.filters{{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;margin:4px 0 8px}}
-.filters button{{border:1px solid #ccc;background:#fff;border-radius:12px;padding:4px 10px;font:inherit;color:inherit;cursor:pointer}}
-.filters button.active{{background:#0a5;border-color:#0a5;color:#fff}}
+.filterbar{{position:sticky;top:0;background:#fafafa;display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;margin-bottom:4px;z-index:1}}
+.selfilter{{flex:1 1 150px;min-width:0;font:inherit;font-size:13px;color:inherit;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23666" d="M5 7l5 6 5-6z"/></svg>') no-repeat right 10px center;background-size:14px;border:1px solid #ccc;border-radius:10px;padding:7px 28px 7px 10px;-webkit-appearance:none;appearance:none}}
 li.hidden{{display:none}}
 .cardhead{{overflow:hidden}}
 .fav{{float:right;background:none;border:none;font-size:20px;line-height:1.2;cursor:pointer;color:#bbb;padding:0 0 4px 8px}}
 .fav.active{{color:#e0a500}}
 h3{{font-size:14px;margin:14px 0 6px;color:#666}}
 .fav-toggle{{display:block;width:100%;border:1px dashed #ccc;background:none;border-radius:8px;padding:8px;font:inherit;font-size:13px;color:#0a5;cursor:pointer}}
-@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}nav.jump{{background:#111}}nav.jump a{{background:#262626;color:#eee}}.filters button{{background:#1c1c1c;border-color:#444;color:#eee}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}}}
+.tabs{{display:flex;gap:6px;margin:10px 0}}
+.tabbtn{{flex:1;border:1px solid #ccc;background:#fff;border-radius:10px;padding:8px;font:inherit;font-weight:600;color:inherit;cursor:pointer}}
+.tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}
+.tabpanel[hidden]{{display:none}}
+@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}.filterbar{{background:#111}}.selfilter{{background-color:#1c1c1c;border-color:#444;color:#eee;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23aaa" d="M5 7l5 6 5-6z"/></svg>')}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}.tabbtn{{background:#1c1c1c;border-color:#444;color:#eee}}.tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}}}
 </style></head><body><h1>Sorties autour de {label} <span id="km-suffix">{h1_suffix}</span></h1>
-{nav_html}
-{filters_html}
-{body}{footer}
+{tabs_html}{footer}
 <script>
-var catButtons = document.querySelectorAll('.catf');
-var distButtons = document.querySelectorAll('.distf');
+// --- onglets Découvrir / Mes favoris ---
+var tabButtons = document.querySelectorAll('.tabbtn');
+function showTab(name){{
+  document.getElementById('tab-decouvrir').hidden = name !== 'decouvrir';
+  document.getElementById('tab-favoris').hidden = name !== 'favoris';
+  tabButtons.forEach(function(b){{ b.classList.toggle('active', b.dataset.tab === name); }});
+  try {{ localStorage.setItem('agendaTab', name); }} catch (err) {{}}
+}}
+tabButtons.forEach(function(b){{
+  b.addEventListener('click', function(){{ showTab(b.dataset.tab); }});
+}});
+var savedTab = '';
+try {{ savedTab = localStorage.getItem('agendaTab') || ''; }} catch (err) {{}}
+showTab(savedTab === 'favoris' ? 'favoris' : 'decouvrir');
+
+var catSel = document.getElementById('catsel');
+var distSel = document.getElementById('distsel');
 var currentCat = '__all__';
 var currentDist = {default_km};
-var currentInclude = (distButtons[0] && distButtons[0].dataset.include) ?
-  distButtons[0].dataset.include.split(',').filter(Boolean) : [];
+var currentInclude = (distSel && distSel.selectedOptions[0] && distSel.selectedOptions[0].dataset.include) ?
+  distSel.selectedOptions[0].dataset.include.split(',').filter(Boolean) : [];
 function applyFilters(){{
   document.querySelectorAll('li').forEach(function(li){{
     var catOk = currentCat === '__all__' || !li.dataset.cat || li.dataset.cat === currentCat;
@@ -1276,23 +1335,30 @@ function applyFilters(){{
   }});
 }}
 applyFilters();
-catButtons.forEach(function(b){{
-  b.addEventListener('click', function(){{
-    currentCat = (currentCat === b.dataset.cat) ? '__all__' : b.dataset.cat;
-    catButtons.forEach(function(x){{ x.classList.toggle('active', x.dataset.cat === currentCat); }});
+if (catSel) {{
+  catSel.addEventListener('change', function(){{
+    currentCat = catSel.value;
     applyFilters();
   }});
-}});
+}}
 var kmSuffix = document.getElementById('km-suffix');
-distButtons.forEach(function(b){{
-  b.addEventListener('click', function(){{
-    currentDist = Number(b.dataset.maxdist);
-    currentInclude = b.dataset.include ? b.dataset.include.split(',').filter(Boolean) : [];
-    distButtons.forEach(function(x){{ x.classList.toggle('active', x === b); }});
+if (distSel) {{
+  distSel.addEventListener('change', function(){{
+    var opt = distSel.selectedOptions[0];
+    currentDist = Number(opt.value);
+    currentInclude = opt.dataset.include ? opt.dataset.include.split(',').filter(Boolean) : [];
     if (kmSuffix) {{ kmSuffix.textContent = currentInclude.length ? '' : '(≤ ' + currentDist + ' km)'; }}
     applyFilters();
   }});
-}});
+}}
+var jumpSel = document.getElementById('jumpsel');
+if (jumpSel) {{
+  jumpSel.addEventListener('change', function(){{
+    var target = document.getElementById(jumpSel.value);
+    if (target) {{ target.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}
+    jumpSel.selectedIndex = 0;
+  }});
+}}
 
 // --- favoris (localStorage, persiste d'une génération de page à l'autre) ---
 function favEsc(s){{
