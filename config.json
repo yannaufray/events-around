@@ -39,5 +39,11 @@
       "nom": "Bibliothèque Jacques Cabanel (Montignac)",
       "url": "https://ville-montignac.com/culture/bibliotheque"
     }
+  ],
+  "cinemas": [
+    {
+      "nom": "Cinéma Le Vox (Montignac)",
+      "url": "https://ville-montignac.com/culture/cinema-le-vox"
+    }
   ]
 }

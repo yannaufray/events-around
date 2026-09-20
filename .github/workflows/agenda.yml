@@ -1,6 +1,8 @@
 name: Générer l'agenda et publier sur GitHub Pages
 
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: "0 6 * * *" # tous les jours à 06:00 UTC (les sections "Mercredi" / "Ce week-end" glissent chaque jour)
   workflow_dispatch: {}

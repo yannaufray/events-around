@@ -626,6 +626,7 @@ def parse_library_hours(page):
 
 
 def fetch_library_hours(cfg):
+    """Bibliothèques : ce sont des lieux (horaires fixes), pas des événements datés."""
     out = []
     for lib in cfg.get("bibliotheques", []):
         try:
@@ -634,7 +635,60 @@ def fetch_library_hours(cfg):
             print(f"  Bibliothèque « {lib.get('nom')} » ignorée : {e}", file=sys.stderr)
             continue
         if horaires:
-            out.append({"nom": lib["nom"], "url": lib["url"], "horaires": horaires})
+            lines = [f"{jour} : {heures}" for jour, heures in horaires]
+            out.append({"nom": lib["nom"], "url": lib["url"], "lines": lines, "links": []})
+    return out
+
+
+# ---------------------------------------------------------------- source 5 : cinéma (infos, pas de séances)
+# Le programme complet (dates/séances) n'existe qu'en PDF mensuel, sans structure
+# garantie -> pas de parsing de séances (fragile + dépendance externe). On se
+# contente d'un lien toujours à jour vers ce PDF, comme pour un lieu classique.
+_CINEMA_PROGRAMME = re.compile(r"^(Programme du .+)$", re.I)
+_CINEMA_PHONE = re.compile(r"^T[ée]l\.?\s*:?\s*([\d .]{8,})$")
+_CINEMA_POSTAL = re.compile(r"^(\d{5})\s+(.+)$")
+
+
+def parse_cinema_info(page):
+    tp = _TextLines()
+    tp.feed(page)
+    lines = [re.sub(r"\s+", " ", l).strip() for l in tp.lines]
+    info = {}
+    for i, l in enumerate(lines):
+        m = _CINEMA_PROGRAMME.match(l)
+        if m and "programme_text" not in info:
+            info["programme_text"] = m.group(1)
+            for hi, href in tp.hrefs:
+                if hi == i and href.lower().endswith(".pdf"):
+                    info["programme_url"] = href
+                    break
+        m2 = _CINEMA_PHONE.match(l)
+        if m2 and "telephone" not in info:
+            info["telephone"] = m2.group(1).strip()
+        m3 = _CINEMA_POSTAL.match(l)
+        if m3 and "adresse" not in info and i > 0 and lines[i - 1].strip():
+            info["adresse"] = f"{lines[i - 1].strip()}, {m3.group(1)} {m3.group(2)}"
+    return info
+
+
+def fetch_cinema_info(cfg):
+    out = []
+    for cine in cfg.get("cinemas", []):
+        try:
+            info = parse_cinema_info(http_get(cine["url"]))
+        except Exception as e:
+            print(f"  Cinéma « {cine.get('nom')} » ignoré : {e}", file=sys.stderr)
+            continue
+        lines = [info[k] for k in ("adresse",) if k in info]
+        if info.get("telephone"):
+            lines.append(f"Tél. : {info['telephone']}")
+        links = []
+        if info.get("programme_url"):
+            links.append((info.get("programme_text", "Programme"), info["programme_url"]))
+        elif info.get("programme_text"):
+            lines.append(info["programme_text"])
+        if lines or links:
+            out.append({"nom": cine["nom"], "url": cine["url"], "lines": lines, "links": links})
     return out
 
 
@@ -831,15 +885,19 @@ def _bucketize(events, windows):
     return buckets
 
 
-def _library_card(lib):
-    lines = "".join(f"<div>{html.escape(d)} : {html.escape(h)}</div>" for d, h in lib["horaires"])
-    name = html.escape(lib["nom"])
-    if lib.get("url"):
-        name = f'<a href="{html.escape(lib["url"])}">{name}</a>'
-    return f'<li><div class="t">{name}</div><div class="m">{lines}</div></li>'
+def _place_card(place):
+    """Carte pour un lieu culturel (bibliothèque, cinéma...) : infos fixes, pas de date."""
+    name = html.escape(place["nom"])
+    if place.get("url"):
+        name = f'<a href="{html.escape(place["url"])}">{name}</a>'
+    lines = "".join(f"<div>{html.escape(l)}</div>" for l in place.get("lines", []))
+    links = "".join(
+        f'<div><a href="{html.escape(u)}">{html.escape(lbl)}</a></div>' for lbl, u in place.get("links", [])
+    )
+    return f'<li><div class="t">{name}</div><div class="m">{lines}{links}</div></li>'
 
 
-def write_html(events, path, cfg, now, libraries=()):
+def write_html(events, path, cfg, now, lieux=()):
     wk_start, wk_end = weekend_window(now)
     wed_start, wed_end = wednesday_window(now)
     next_wk_start, next_wk_end = next_weekend_window(now)
@@ -863,8 +921,8 @@ def write_html(events, path, cfg, now, libraries=()):
     section_defs = list(windows)
     if buckets["À venir"]:
         section_defs.append(("À venir", None, None))
-    if libraries:
-        section_defs.append(("Bibliothèques", None, None))
+    if lieux:
+        section_defs.append(("Lieux culturels", None, None))
 
     nav = "".join(f'<a href="#{_slug(lbl)}">{html.escape(lbl)}</a>' for lbl, _, _ in section_defs)
     nav_html = f'<nav class="jump">{nav}</nav>' if len(section_defs) > 1 else ""
@@ -873,10 +931,10 @@ def write_html(events, path, cfg, now, libraries=()):
     if buckets["À venir"]:
         body += _section("À venir", buckets["À venir"])
 
-    if libraries:
+    if lieux:
         body += (
-            '<section><h2 id="bibliotheques">Bibliothèques</h2><ul>'
-            + "".join(_library_card(lib) for lib in libraries)
+            f'<section><h2 id="{_slug("Lieux culturels")}">Lieux culturels</h2><ul>'
+            + "".join(_place_card(p) for p in lieux)
             + "</ul></section>"
         )
 
@@ -973,14 +1031,14 @@ def main():
     print(f"  Pages web : {len(got)}")
     events += got
 
-    libraries = fetch_library_hours(cfg)
-    print(f"  Bibliothèques : {len(libraries)}")
+    lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg)
+    print(f"  Lieux culturels : {len(lieux)}")
 
     events = mark_long_running(apply_distance(dedupe(events), cfg))
     out = Path(cfg.get("dossier_sortie", "sortie"))
     out.mkdir(exist_ok=True)
     write_ics(events, out / "agenda.ics", now)
-    write_html(events, out / "index.html", cfg, now, libraries)
+    write_html(events, out / "index.html", cfg, now, lieux)
     print(f"{len(events)} événements -> {out}/agenda.ics et {out}/index.html")
 
 

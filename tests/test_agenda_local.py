@@ -281,5 +281,18 @@ class TestLibraryHours(unittest.TestCase):
         self.assertEqual(al.parse_library_hours("<html><body><p>Rien ici</p></body></html>"), [])
 
 
+class TestCinemaInfo(unittest.TestCase):
+    def test_parses_real_fixture(self):
+        page = (FIXTURES / "cinema_page.html").read_text(encoding="utf-8")
+        info = al.parse_cinema_info(page)
+        self.assertIn("24290", info.get("adresse", ""))
+        self.assertRegex(info.get("telephone", ""), r"\d{2} \d{2} \d{2} \d{2} \d{2}")
+        self.assertTrue(info.get("programme_text", "").lower().startswith("programme du"))
+        self.assertTrue(info.get("programme_url", "").endswith(".pdf"))
+
+    def test_no_info_returns_empty_dict(self):
+        self.assertEqual(al.parse_cinema_info("<html><body><p>Rien ici</p></body></html>"), {})
+
+
 if __name__ == "__main__":
     unittest.main()
