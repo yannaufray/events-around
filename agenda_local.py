@@ -1569,7 +1569,7 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=()):
 
     favoris_html = (
         f'<section id="{_slug("Favoris")}"><h2>Favoris</h2>'
-        f'<ul id="favoris-upcoming"><li>Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</li></ul>'
+        f'<div id="favoris-upcoming"><p class="s">Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</p></div>'
         f'<div id="favoris-archived-wrap" style="display:none"><h3>Passés</h3><ul id="favoris-archived"></ul></div>'
         f"{sync_html}"
         f"</section>"
@@ -1835,6 +1835,25 @@ function favCardHtml(id, f){{
     + '<details><summary>' + header + '</summary>' + detail + '</details></li>';
 }}
 
+// Regroupe les favoris à venir par proximité (calcul simple en jours depuis
+// aujourd'hui, sans reproduire les fenêtres week-end exactes de Découvrir) :
+// juste de quoi éviter un mur de liste quand il y en a beaucoup.
+var FAV_BUCKET_LABELS = ["Aujourd'hui", 'Cette semaine', 'Semaine prochaine', 'Plus tard'];
+function favBucketLabel(f, now){{
+  var startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var diffDays = Math.floor((new Date(f.start) - startOfToday) / 86400000);
+  if (diffDays <= 0) return "Aujourd'hui";
+  if (diffDays <= 6) return 'Cette semaine';
+  if (diffDays <= 13) return 'Semaine prochaine';
+  return 'Plus tard';
+}}
+function favBucketize(ids, now){{
+  var buckets = {{}};
+  FAV_BUCKET_LABELS.forEach(function(label){{ buckets[label] = []; }});
+  ids.forEach(function(id){{ buckets[favBucketLabel(favs[id], now)].push(id); }});
+  return buckets;
+}}
+
 var ARCHIVE_LIMIT = 5;
 var archivedExpanded = false;
 
@@ -1849,12 +1868,20 @@ function renderFavoris(){{
   }});
   upcoming.sort(function(a, b){{ return new Date(favs[a].start) - new Date(favs[b].start); }});
   archived.sort(function(a, b){{ return new Date(favs[b].end || favs[b].start) - new Date(favs[a].end || favs[a].start); }});
-  var upcomingList = document.getElementById('favoris-upcoming');
+  var upcomingEl = document.getElementById('favoris-upcoming');
   var archivedWrap = document.getElementById('favoris-archived-wrap');
   var archivedList = document.getElementById('favoris-archived');
-  upcomingList.innerHTML = upcoming.length
-    ? upcoming.map(function(id){{ return favCardHtml(id, favs[id]); }}).join('')
-    : '<li>Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</li>';
+  if (!upcoming.length) {{
+    upcomingEl.innerHTML = '<p class="s">Aucun favori enregistré — cliquez sur ☆ sur un événement pour le garder ici.</p>';
+  }} else {{
+    var buckets = favBucketize(upcoming, now);
+    upcomingEl.innerHTML = FAV_BUCKET_LABELS.map(function(label){{
+      var ids = buckets[label];
+      if (!ids.length) return '';
+      return '<section><h3>' + favEsc(label) + '</h3><ul>'
+        + ids.map(function(id){{ return favCardHtml(id, favs[id]); }}).join('') + '</ul></section>';
+    }}).join('');
+  }}
   var shown = archivedExpanded ? archived : archived.slice(0, ARCHIVE_LIMIT);
   var archiveHtml = shown.map(function(id){{ return favCardHtml(id, favs[id]); }}).join('');
   if (archived.length > ARCHIVE_LIMIT) {{
