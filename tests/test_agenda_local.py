@@ -180,6 +180,72 @@ class TestParseMontignacHtml(unittest.TestCase):
                 self.assertTrue(e.url.startswith("https://ville-montignac.com/agenda/"))
 
 
+class TestParsePolePrehistoireHtml(unittest.TestCase):
+    def setUp(self):
+        self.page = (FIXTURES / "pole_prehistoire_evenements.html").read_text(encoding="utf-8")
+        self.base_url = "https://www.pole-prehistoire.com/index.php/fr/actualites-fr/evenements"
+
+    def test_extracts_plausible_events(self):
+        events = al.parse_pole_prehistoire_html(self.page, self.base_url, "Pôle international de la Préhistoire")
+        self.assertGreater(len(events), 0)
+        for e in events:
+            self.assertTrue(e.title.strip())
+            self.assertIsInstance(e.start, datetime)
+            self.assertIsNotNone(e.start.tzinfo)
+            self.assertLessEqual(e.start, e.end)
+            self.assertTrue(e.url.startswith("https://www.pole-prehistoire.com/fr/actualites-fr/evenements/"))
+
+    def test_time_and_all_day_parsed(self):
+        events = al.parse_pole_prehistoire_html(self.page, self.base_url, "Pôle international de la Préhistoire")
+        concert = next(e for e in events if "Antropoceno" in e.title)
+        self.assertFalse(concert.all_day)
+        self.assertEqual((concert.start.month, concert.start.day), (9, 25))
+        self.assertEqual((concert.start.hour, concert.start.minute), (20, 30))
+
+    def test_missing_year_is_inferred(self):
+        events = al.parse_pole_prehistoire_html(self.page, self.base_url, "Pôle international de la Préhistoire")
+        jep = next(e for e in events if "patrimoine" in e.title.lower())
+        self.assertTrue(jep.all_day)
+        self.assertEqual((jep.start.month, jep.start.day), (9, 20))
+
+
+class TestParseBriveTourismeHtml(unittest.TestCase):
+    def setUp(self):
+        self.page = (FIXTURES / "brive_tourisme_agenda.html").read_text(encoding="utf-8")
+        self.base_url = "https://www.brive-tourisme.com/fr/agenda/complet/"
+
+    def test_extracts_plausible_events(self):
+        events = al.parse_brivetourisme_html(self.page, self.base_url)
+        self.assertEqual(len(events), 10)
+        for e in events:
+            self.assertTrue(e.title.strip())
+            self.assertIsInstance(e.start, datetime)
+            self.assertIsNotNone(e.start.tzinfo)
+            self.assertLessEqual(e.start, e.end)
+            self.assertTrue(e.url.startswith("https://www.brive-tourisme.com/fr/fiche/"))
+            self.assertIsNone(e.lat)  # pas de coordonnées -> jamais filtré par distance
+
+    def test_single_date_parsed(self):
+        events = al.parse_brivetourisme_html(self.page, self.base_url)
+        e = next(e for e in events if "Tours de Merle" in e.title)
+        self.assertEqual((e.start.year, e.start.month, e.start.day), (2026, 9, 21))
+        self.assertTrue(e.all_day)
+        self.assertEqual(e.place, "Saint-Geniez-O-Merle")
+
+    def test_date_range_parsed(self):
+        events = al.parse_brivetourisme_html(self.page, self.base_url)
+        e = next(e for e in events if "Retour de Cannes" in e.title)
+        self.assertEqual((e.start.year, e.start.month, e.start.day), (2026, 9, 11))
+        self.assertEqual((e.end.year, e.end.month, e.end.day), (2026, 9, 27))
+        self.assertEqual(e.place, "Brive-La-Gaillarde")
+
+    def test_recurring_event_kept_as_separate_occurrences(self):
+        # le widget éclate déjà les événements récurrents en une ligne par date
+        events = al.parse_brivetourisme_html(self.page, self.base_url)
+        tresors = [e for e in events if "Trésors d'archives" in e.title]
+        self.assertEqual({e.start.day for e in tresors}, {21, 22})
+
+
 class TestParseLeberouSubpage(unittest.TestCase):
     def test_extracts_date_place_time(self):
         page = (FIXTURES / "leberou_conteur_page.html").read_text(encoding="utf-8")

@@ -865,6 +865,154 @@ def fetch_leberou(cfg, w_start, w_end):
     return events
 
 
+# ---------------------------------------------------------------- source 3ter : Pôle international de la Préhistoire
+# Page « actualités / événements » : tous les événements sont listés sur une seule
+# page (blocs <div class="magazine-item ...">), pas besoin de pagination ni de
+# sous-pages. La date n'a parfois pas d'année (événements récurrents comme les
+# Journées du patrimoine) -> on complète avec l'année en cours, ou la suivante si
+# la date obtenue tombe dans le passé.
+_POLE_BLOCK = re.compile(
+    r'<div class="magazine-item(?:\s[^"]*)?">(.*?)(?=<div class="magazine-item(?:\s[^"]*)?">|\Z)', re.S
+)
+_POLE_LINK = re.compile(r'href="([^"]+/evenements/\d+-[^"]+)"[^>]*itemprop="url">\s*([^<]+)', re.S)
+_POLE_DATE_P = re.compile(r'<div class="magazine-item-ct">\s*<p>(.*?)</p>', re.S)
+_POLE_DATE = re.compile(
+    r"(\d{1,2})(?:er)?\s+([a-zéûA-ZÉÛ]+)(?:\s+(\d{4}))?(?:.*?\bà\s+(\d{1,2})h(\d{2})?)?",
+    re.S,
+)
+
+
+def parse_pole_prehistoire_html(page, base_url, source_name):
+    events = []
+    now = datetime.now(TZ)
+    for block in _POLE_BLOCK.findall(page):
+        lm = _POLE_LINK.search(block)
+        dm_p = _POLE_DATE_P.search(block)
+        if not lm or not dm_p:
+            continue
+        href, title = lm.group(1), html.unescape(re.sub(r"\s+", " ", lm.group(2))).strip()
+        date_text = html.unescape(re.sub(r"<[^>]+>", " ", dm_p.group(1)))
+        dm = _POLE_DATE.search(date_text)
+        if not dm:
+            continue
+        day, mois, year, h, mi = dm.groups()
+        try:
+            start = _mk_date(day, mois, year or now.year)
+        except ValueError:
+            continue
+        if not year and start < now - timedelta(days=1):
+            start = start.replace(year=start.year + 1)
+        all_day = h is None
+        if not all_day:
+            start = start.replace(hour=int(h), minute=int(mi or 0))
+        end = start + (timedelta(days=1) if all_day else timedelta(hours=2))
+        url = parse.urljoin(base_url, href)
+        category = openagenda_category(title, None, None)
+        events.append(Event(title, start, end, "", url, None, None, [source_name],
+                             all_day=all_day, category=category))
+    return events
+
+
+def fetch_pole_prehistoire(cfg, w_start, w_end):
+    src = cfg.get("pole_prehistoire")
+    if not src:
+        return []
+    events = []
+    try:
+        got = parse_pole_prehistoire_html(http_get(src["url"]), src["url"], src.get("nom", "Pôle international de la Préhistoire"))
+    except Exception as e:
+        print(f"  Pôle international de la Préhistoire ignoré : {e}", file=sys.stderr)
+        return []
+    for e in got:
+        if e.lat is None and "lat" in src:
+            e.lat, e.lon = src["lat"], src["lon"]
+        if e.end >= w_start and e.start <= w_end:
+            events.append(e)
+    return events
+
+
+# ---------------------------------------------------------------- source 3quater : Brive Tourisme (agenda)
+# Widget de listing paginé (?id1[currentPage]=N, rendu côté serveur) : un
+# <div class="list-item"> par OCCURRENCE (les événements récurrents/multi-dates
+# sont déjà éclatés en une ligne par date par le site lui-même, pas besoin de
+# suivre chaque fiche détail) — titre, commune, date unique ("Le ...") ou plage
+# ("Du ... au ..."). Couvre toute la Corrèze autour de Brive (Tulle, Turenne,
+# Saint-Geniez-ô-Merle...), pas seulement Brive-ville, mais la page liste la commune
+# en texte seul (pas de lat/lon par item) : on approxime donc TOUTES les occurrences
+# avec les coordonnées de Brive-la-Gaillarde (cfg["brive_tourisme"]["lat"/"lon"]),
+# comme fetch_pole_prehistoire le fait pour sa propre source. Imprécis pour les
+# communes éloignées de Brive (ex. Tulle), mais nécessaire pour que le filtre de
+# rayon (apply_distance, et le menu de palier en JS) ne les traite pas comme
+# "toujours à Montignac" — sans coordonnées du tout, ils remonteraient à tort dans
+# le filtre le plus étroit ("Montignac 15 km"). Trié par date croissante -> on
+# arrête la pagination dès qu'une page ne ramène plus aucune date dans la fenêtre
+# [w_start, w_end], avec un plafond de pages en garde-fou si jamais le tri venait à
+# changer.
+_BT_ITEM = re.compile(r'<div class="list-item">.*?</div></div></div>', re.S)
+_BT_TITLE = re.compile(r'<h3><a href="([^"]+)"[^>]*>\s*([^<]+?)\s*</a></h3>')
+_BT_PLACE = re.compile(r'class="place[^"]*">.*?list-icon"></i>\s*([^<]+?)\s*</span>', re.S)
+_BT_DATE_RANGE = re.compile(
+    r"Du\s+(\d{1,2})(?:er)?\s+([a-zéû]+)\s+(\d{4})\s+au\s+(\d{1,2})(?:er)?\s+([a-zéû]+)\s+(\d{4})", re.I
+)
+_BT_DATE_SINGLE = re.compile(r"Le\s+(\d{1,2})(?:er)?\s+([a-zéû]+)\s+(\d{4})", re.I)
+_BT_MAX_PAGES = 60
+
+
+def parse_brivetourisme_html(page, base_url):
+    events = []
+    for block in _BT_ITEM.findall(page):
+        tm = _BT_TITLE.search(block)
+        if not tm:
+            continue
+        href, title = tm.group(1), html.unescape(tm.group(2))
+        pm = _BT_PLACE.search(block)
+        place = html.unescape(pm.group(1)).strip().title() if pm else ""
+        rm = _BT_DATE_RANGE.search(block)
+        try:
+            if rm:
+                d1, mo1, y1, d2, mo2, y2 = rm.groups()
+                start = _mk_date(d1, mo1, y1)
+                end = _mk_date(d2, mo2, y2).replace(hour=23, minute=59)
+            else:
+                sm = _BT_DATE_SINGLE.search(block)
+                if not sm:
+                    continue
+                start = _mk_date(*sm.groups())
+                end = start + timedelta(days=1)
+        except ValueError:
+            continue
+        url = parse.urljoin(base_url, href)
+        category = openagenda_category(title, None, None)
+        events.append(Event(title, start, end, place, url, None, None, ["Brive Tourisme"],
+                             all_day=True, category=category))
+    return events
+
+
+def fetch_brivetourisme(cfg, w_start, w_end):
+    src = cfg.get("brive_tourisme")
+    if not src:
+        return []
+    base_url = src["url"]
+    events = []
+    for page_num in range(1, _BT_MAX_PAGES + 1):
+        url = base_url if page_num == 1 else base_url + "?" + parse.urlencode({"id1[currentPage]": page_num})
+        try:
+            got = parse_brivetourisme_html(http_get(url), base_url)
+        except Exception as e:
+            print(f"  Brive Tourisme (page {page_num}) ignorée : {e}", file=sys.stderr)
+            break
+        if not got:
+            break
+        in_window = [e for e in got if e.end >= w_start and e.start <= w_end]
+        for e in in_window:
+            if "lat" in src:
+                e.lat, e.lon = src["lat"], src["lon"]
+        events += in_window
+        if not in_window and all(e.start > w_end for e in got):
+            break
+    return events
+
+
 # ---------------------------------------------------------------- source 4 : horaires des bibliothèques
 _LIB_DAY_LINE = re.compile(r"^([A-ZÀ-Ü][\w& à-ü-]*?)\s*:\s*(.+)$")
 # variante sans « : » (ex. site de Sarlat : « Mardi 12h30 – 18h30 »)
@@ -1254,7 +1402,7 @@ def _place_card(place):
     return f'<li{dist_attr}><div class="t">{name}</div><div class="m">{lines}{links}</div></li>'
 
 
-def write_html(events, path, cfg, now, lieux=()):
+def write_html(events, path, cfg, now, lieux=(), autres_liens=()):
     wk_start, wk_end = weekend_window(now)
     week_start, week_end = week_window(now)
     next_wk_start, next_wk_end = next_weekend_window(now)
@@ -1356,6 +1504,23 @@ def write_html(events, path, cfg, now, lieux=()):
             + "</ul></section>"
         )
 
+    # sources dont les événements ne se prêtent pas à une agrégation fiable (trop
+    # de dates/lieux différents par événement, mise en page trop irrégulière...) :
+    # on pointe vers le site plutôt que de scraper. Repliée par défaut (<details>,
+    # même widget que les cartes d'événements) : une seule ligne juste sous le
+    # titre, repérable à chaque ouverture sans monopoliser la place en
+    # permanence — un gros bloc ouvert à l'année aurait vite lassé. Réutilisable
+    # pour toute future source du même genre en ajoutant une entrée à
+    # cfg["liens_utiles"].
+    autres_liens_html = (
+        '<details class="alsobox"><summary>À voir aussi'
+        f' <span class="s">({len(autres_liens)})</span></summary><ul>'
+        + "".join(_place_card(p) for p in autres_liens)
+        + "</ul></details>"
+        if autres_liens
+        else ""
+    )
+
     # deux onglets pour ne pas tout empiler en haut de page : Découvrir (nav
     # d'ancres, filtres, sections datées) et Mes favoris (liste + synchro) ; le
     # dernier onglet consulté est mémorisé (localStorage) pour rouvrir directement
@@ -1405,8 +1570,11 @@ h3{{font-size:14px;margin:14px 0 6px;color:#666}}
 .tabbtn{{flex:1;border:1px solid #ccc;background:#fff;border-radius:10px;padding:8px;font:inherit;font-weight:600;color:inherit;cursor:pointer}}
 .tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}
 .tabpanel[hidden]{{display:none}}
-@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}.filterbar{{background:#111}}.selfilter{{background-color:#1c1c1c;border-color:#444;color:#eee;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23aaa" d="M5 7l5 6 5-6z"/></svg>')}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}.tabbtn{{background:#1c1c1c;border-color:#444;color:#eee}}.tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}}}
+.alsobox{{margin:8px 0}} .alsobox summary{{font-size:13px;font-weight:600;color:#666;padding:4px 20px 4px 0}}
+.alsobox ul{{margin-top:6px}} .alsobox li{{border-left:3px solid #0a5}}
+@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}.filterbar{{background:#111}}.selfilter{{background-color:#1c1c1c;border-color:#444;color:#eee;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23aaa" d="M5 7l5 6 5-6z"/></svg>')}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}.tabbtn{{background:#1c1c1c;border-color:#444;color:#eee}}.tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}.alsobox summary{{color:#999}}.alsobox li{{border-left-color:#5fd08a}}}}
 </style></head><body><h1>Sorties autour de {label} <span id="km-suffix">{h1_suffix}</span></h1>
+{autres_liens_html}
 {tabs_html}{footer}
 <script>
 // --- onglets Découvrir / Mes favoris ---
@@ -1696,15 +1864,26 @@ def main():
         events += got
     except Exception as e:
         print(f"  Festival Le Lébérou ignoré : {e}", file=sys.stderr)
+    got = fetch_pole_prehistoire(cfg, w_start, w_end)
+    print(f"  Pôle international de la Préhistoire : {len(got)}")
+    events += got
+    got = fetch_brivetourisme(cfg, w_start, w_end)
+    print(f"  Brive Tourisme : {len(got)}")
+    events += got
 
     lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg)
     print(f"  Lieux culturels : {len(lieux)}")
+    autres_liens = [
+        {"nom": s["nom"], "url": s.get("url"), "lines": s.get("lignes", []),
+         "links": [tuple(l) for l in s.get("liens", [])]}
+        for s in cfg.get("liens_utiles", [])
+    ]
 
     events = mark_long_running(apply_distance(dedupe(events), cfg))
     out = Path(cfg.get("dossier_sortie", "sortie"))
     out.mkdir(exist_ok=True)
     write_ics(events, out / "agenda.ics", now)
-    write_html(events, out / "index.html", cfg, now, lieux)
+    write_html(events, out / "index.html", cfg, now, lieux, autres_liens)
     print(f"{len(events)} événements -> {out}/agenda.ics et {out}/index.html")
 
 

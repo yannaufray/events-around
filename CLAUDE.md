@@ -44,6 +44,28 @@ The script is organized as a fixed pipeline, in `main()`:
    - `fetch_library_hours` / `fetch_cinema_info` — scrape opening-hours/info blocks for libraries and
      cinemas (`config.json["bibliotheques"]` / `["cinemas"]`); these are "lieux" (places), not
      dated events, and are rendered separately in the HTML
+   - `fetch_pole_prehistoire` — dedicated single-page HTML scraper (source 3ter) for
+     pole-prehistoire.com's events listing
+   - `fetch_brivetourisme` — paginated HTML scraper (source 3quater) for brive-tourisme.com's agenda
+     widget (`config.json["brive_tourisme"]`); each list item is already a single date/commune (the site
+     itself splits recurring/multi-date events into one row per occurrence), so unlike culturedordogne
+     this one is fully parsed — but it spans all of Corrèze around Brive (Tulle, Turenne...), not just
+     Brive-ville, and the listing only gives a commune name, not per-item coordinates, so every occurrence
+     is approximated with Brive-la-Gaillarde's own lat/lon (`config.json["brive_tourisme"]["lat"/"lon"]`) —
+     imprecise for outlying communes, but needed so the radius filter (and the UI's distance-tier menu)
+     doesn't treat these as "always at Montignac" the way genuinely coordinate-less local feeds are.
+     Paginates via `?id1[currentPage]=N` (results sorted by date) and stops once a page's dates fall past
+     the fetch window.
+   - `config.json["liens_utiles"]` (no fetch function — built directly in `main()`) — a fallback for
+     sources whose events aren't worth scraping at all: markup too irregular/brittle to parse reliably
+     (e.g. culturedordogne.fr's "saison" listings: several dates/communes per touring item, some items
+     with no date at all in the listing), or where even a correctly-parsed single date/place per item
+     would misrepresent a multi-date touring event. Each entry is rendered as a link-out card via
+     `_place_card`, in a prominent "À voir aussi" block placed right under the page title (not buried at
+     the bottom) — with a `lignes` description giving the general period/frequency (e.g. "toute l'année
+     scolaire") rather than fabricated per-event dates. Reuse this before writing a new parser for a
+     similarly irregular source; only actually scrape events if a single reliable date per item is
+     achievable without misleading users about recurring/touring events.
 2. **Merge** — `dedupe()` (title/date/place fuzzy matching via `difflib`), `apply_distance()` (haversine
    filter against `config.json["rayon_km"]`, using per-category radius tiers in `paliers_rayon`),
    `mark_long_running()` (flags multi-day/ongoing events differently from single-date ones)

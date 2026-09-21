@@ -47,6 +47,33 @@
     "nom": "Festival Le Lébérou (contes)",
     "site": "https://www.contesduleberou.com"
   },
+  "pole_prehistoire": {
+    "nom": "Pôle international de la Préhistoire",
+    "url": "https://www.pole-prehistoire.com/index.php/fr/actualites-fr/evenements",
+    "lat": 44.9333,
+    "lon": 1.0167
+  },
+  "brive_tourisme": {
+    "nom": "Brive Tourisme",
+    "url": "https://www.brive-tourisme.com/fr/agenda/complet/",
+    "lat": 45.1591,
+    "lon": 1.5336
+  },
+  "liens_utiles": [
+    {
+      "nom": "Culture Dordogne (Agence culturelle départementale)",
+      "url": "https://www.culturedordogne.fr/",
+      "lignes": [
+        "Programmation départementale toute l'année scolaire (env. septembre à juin/juillet), dans de nombreuses communes de Dordogne — trop de dates et de lieux différents par événement (souvent en tournée) pour être repris ici de façon fiable :"
+      ],
+      "liens": [
+        ["En Scène — spectacles vivants", "https://www.culturedordogne.fr/en-scene/saison"],
+        ["De Visu — expositions", "https://www.culturedordogne.fr/de-visu/saison"],
+        ["Paratge — musiques et danses trad.", "https://www.culturedordogne.fr/paratge/la-saison"],
+        ["Spring — jeune public (janvier à mai)", "https://www.culturedordogne.fr/spring/le-programme"]
+      ]
+    }
+  ],
   "bibliotheques": [
     {
       "nom": "Bibliothèque Jacques Cabanel (Montignac)",
