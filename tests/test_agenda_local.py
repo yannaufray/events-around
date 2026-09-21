@@ -180,6 +180,38 @@ class TestParseMontignacHtml(unittest.TestCase):
                 self.assertTrue(e.url.startswith("https://ville-montignac.com/agenda/"))
 
 
+class TestParseLeberouSubpage(unittest.TestCase):
+    def test_extracts_date_place_time(self):
+        page = (FIXTURES / "leberou_conteur_page.html").read_text(encoding="utf-8")
+        e = al.parse_leberou_subpage(page, 2026, "Festival Le Lébérou (contes)")
+        self.assertIsNotNone(e)
+        self.assertEqual(e.title, "Nadia Roz")
+        self.assertEqual((e.start.month, e.start.day), (10, 31))
+        self.assertFalse(e.all_day)
+        self.assertEqual((e.start.hour, e.start.minute), (21, 0))
+        self.assertIn("Montignac", e.place)
+        self.assertEqual(e.category, "Culture & spectacles")
+        self.assertEqual(e.sources, ["Festival Le Lébérou (contes)"])
+
+    def test_no_explicit_time_is_all_day(self):
+        page = (FIXTURES / "leberou_bertoo_page.html").read_text(encoding="utf-8")
+        e = al.parse_leberou_subpage(page, 2026, "Festival Le Lébérou (contes)")
+        self.assertIsNotNone(e)
+        self.assertEqual(e.title, "Bertoo")
+        self.assertEqual((e.start.month, e.start.day), (11, 7))
+        self.assertTrue(e.all_day)
+        self.assertIn("La Chapelle Aubareil", e.place)
+
+    def test_date_at_end_of_line_still_parsed(self):
+        # cas particulier : sur cette page la date est en fin de ligne, pas en début
+        page = (FIXTURES / "leberou_randonnee_page.html").read_text(encoding="utf-8")
+        e = al.parse_leberou_subpage(page, 2026, "Festival Le Lébérou (contes)")
+        self.assertIsNotNone(e)
+        self.assertEqual((e.start.month, e.start.day), (10, 4))
+        self.assertFalse(e.all_day)
+        self.assertEqual((e.start.hour, e.start.minute), (8, 30))
+
+
 class TestDatatourisme(unittest.TestCase):
     def setUp(self):
         self.objects = json.loads((FIXTURES / "datatourisme_objects.json").read_text(encoding="utf-8"))

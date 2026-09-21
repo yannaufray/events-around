@@ -240,6 +240,16 @@ def http_get_json(url, params=None):
     return json.loads(http_get(url, params))
 
 
+def _url_ascii(url):
+    """Encode en pourcents les caractères non-ASCII du chemin/de la requête (certains
+    sites, ex. contesduleberou.com, ont des URL avec des accents non encodés dans
+    leurs liens <a href>, ce que urllib refuse d'envoyer tel quel)."""
+    parts = parse.urlsplit(url)
+    path = parse.quote(parts.path, safe="/%")
+    query = parse.quote(parts.query, safe="=&%")
+    return parse.urlunsplit((parts.scheme, parts.netloc, path, query, parts.fragment))
+
+
 # ---------------------------------------------------------------- utilitaires
 def haversine(lat1, lon1, lat2, lon2):
     r = 6371.0
@@ -765,6 +775,93 @@ def fetch_web_pages(cfg, w_start, w_end):
                 events += [e for e in got if e.end >= w_start and e.start <= w_end]
                 if not got or min(e.start for e in got) < w_start:
                     break  # les pages sont triées du plus récent au plus ancien
+    return events
+
+
+# ---------------------------------------------------------------- source 3bis : festival Le Lébérou (contes)
+# Site Jimdo, un contexte par conteur sous /festival-{année}/<slug>/ (le slug de l'année
+# courante change chaque année et l'ancienne édition part sous /archives/festival-{année}/,
+# donc on calcule l'URL de l'édition en cours à partir de l'année courante plutôt que de
+# la figer dans config.json).
+_LEBEROU_SUBPAGE_HREF = re.compile(r"^/festival-\d{4}/([^/]+)/?$")
+_LEBEROU_DATE = re.compile(
+    r"\b(?:Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche|Lun|Mar|Mer|Jeu|Ven|Sam|Dim)\.?"
+    r"\s+(\d{1,2})(?:er)?\s+([a-zéûA-ZÉÛ]+)\b",
+    re.I,
+)
+_LEBEROU_TIME = re.compile(r"^(\d{1,2})h(\d{2})?$")
+
+
+def parse_leberou_subpage(page, year, source_name):
+    """Cherche, sur la page d'un conteur, la ligne juste après le titre qui contient
+    une date (« Samedi 31 octobre - Lieu - 21h00 », ou parfois la date en fin de
+    ligne) ; renvoie None si la page ne présente pas ce format (ex. redirection,
+    page « hors festival » atypique)."""
+    tp = _TextLines()
+    tp.feed(page)
+    lines = [re.sub(r"\s+", " ", l).strip() for l in tp.lines]
+    idx = [i for i, l in enumerate(lines) if l]
+    for pos, i in enumerate(idx):
+        line = lines[i]
+        dm = _LEBEROU_DATE.search(line)
+        if not dm or pos == 0:
+            continue
+        title = lines[idx[pos - 1]]
+        if not title:
+            continue
+        try:
+            start = _mk_date(dm.group(1), dm.group(2), year)
+        except ValueError:
+            continue
+        segments = [s.strip() for s in line.split(" - ") if s.strip()]
+        segments = [s for s in segments if not _LEBEROU_DATE.search(s)]
+        all_day = True
+        if segments and _LEBEROU_TIME.match(segments[-1]):
+            tm = _LEBEROU_TIME.match(segments[-1])
+            start = start.replace(hour=int(tm.group(1)), minute=int(tm.group(2) or 0))
+            all_day = False
+            segments = segments[:-1]
+        place = " - ".join(segments)
+        end = start + (timedelta(days=1) if all_day else timedelta(hours=2))
+        return Event(title, start, end, place, "", None, None, [source_name],
+                      all_day=all_day, category="Culture & spectacles")
+    return None
+
+
+def fetch_leberou(cfg, w_start, w_end):
+    src = cfg.get("festival_leberou")
+    if not src:
+        return []
+    year = datetime.now(TZ).year
+    base = src["site"].rstrip("/")
+    nom = src.get("nom", "Festival Le Lébérou")
+    overview_url = f"{base}/festival-{year}/"
+    try:
+        overview = http_get(overview_url)
+    except Exception as e:
+        print(f"  Festival Le Lébérou ignoré : {e}", file=sys.stderr)
+        return []
+    tp = _TextLines()
+    tp.feed(overview)
+    sub_urls, seen = [], set()
+    for _, href in tp.hrefs:
+        m = _LEBEROU_SUBPAGE_HREF.match(parse.urlsplit(href).path)
+        if not m or not m.group(1):
+            continue
+        url = parse.urljoin(base + "/", href)
+        if url not in seen:
+            seen.add(url)
+            sub_urls.append(url)
+    events = []
+    for url in sub_urls:
+        try:
+            e = parse_leberou_subpage(http_get(_url_ascii(url)), year, nom)
+        except Exception as ex:
+            print(f"  Page « {url} » ignorée : {ex}", file=sys.stderr)
+            continue
+        if e and e.end >= w_start and e.start <= w_end:
+            e.url = url
+            events.append(e)
     return events
 
 
@@ -1593,6 +1690,12 @@ def main():
     got = fetch_web_pages(cfg, w_start, w_end)
     print(f"  Pages web : {len(got)}")
     events += got
+    try:
+        got = fetch_leberou(cfg, w_start, w_end)
+        print(f"  Festival Le Lébérou : {len(got)}")
+        events += got
+    except Exception as e:
+        print(f"  Festival Le Lébérou ignoré : {e}", file=sys.stderr)
 
     lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg)
     print(f"  Lieux culturels : {len(lieux)}")

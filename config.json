@@ -43,6 +43,10 @@
       "lon": 1.1667
     }
   ],
+  "festival_leberou": {
+    "nom": "Festival Le Lébérou (contes)",
+    "site": "https://www.contesduleberou.com"
+  },
   "bibliotheques": [
     {
       "nom": "Bibliothèque Jacques Cabanel (Montignac)",
