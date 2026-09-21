@@ -56,6 +56,22 @@ The script is organized as a fixed pipeline, in `main()`:
      doesn't treat these as "always at Montignac" the way genuinely coordinate-less local feeds are.
      Paginates via `?id1[currentPage]=N` (results sorted by date) and stops once a page's dates fall past
      the fetch window.
+   - `fetch_perigueux` — regex-based RSS scraper (source 3quinquies) for perigueux.fr's agenda feed
+     (`config.json["perigueux"]`); the feed's XML is invalid (undeclared `ev:` namespace) so `xml.etree`
+     can't parse it, hence regex instead of a real XML parser
+   - `fetch_sarlat_mairie` / `fetch_sarlat_centreculturel` — server-rendered HTML scrapers (source
+     3sexies/3septies) for sarlat.fr's WordPress/Elementor+JetEngine agenda and
+     sarlat-centreculturel.fr's own season listing (`config.json["sarlat_mairie"]` /
+     `["sarlat_centreculturel"]`); Sarlat's own tourism-office site (sarlat-tourisme.com) is a JS
+     single-page app (Woody/tourism-system.com CMS, mustache-style `{% title %}` templates filled by an
+     authenticated API call) with no usable server-rendered markup, so it's skipped — sarlat.fr and
+     sarlat-centreculturel.fr cover most of the same events and both render real HTML server-side.
+     vezere-perigord.fr (Vallée Vézère tourism office, covers Terrasson/Hautefort, not Montignac itself)
+     runs the same Woody CMS and is skipped for the same reason.
+   - `fetch_marches` — not a scraper: weekly markets (Montignac, Sarlat, Brive, Périgueux) have no
+     structured per-date listing worth scraping (they're always-the-same-weekday recurring events), so
+     they're entered by hand in `config.json["marches"]` (day/hours verified against each town's official
+     site) and rendered as "lieux" like libraries/cinemas, not as dated `Event`s
    - `config.json["liens_utiles"]` (no fetch function — built directly in `main()`) — a fallback for
      sources whose events aren't worth scraping at all: markup too irregular/brittle to parse reliably
      (e.g. culturedordogne.fr's "saison" listings: several dates/communes per touring item, some items

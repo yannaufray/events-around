@@ -65,6 +65,18 @@
     "lat": 45.1848,
     "lon": 0.7211
   },
+  "sarlat_mairie": {
+    "nom": "Mairie de Sarlat",
+    "url": "https://sarlat.fr/sortir-et-bouger/agenda/",
+    "lat": 44.8892,
+    "lon": 1.2166
+  },
+  "sarlat_centreculturel": {
+    "nom": "Centre Culturel de Sarlat",
+    "url": "https://www.sarlat-centreculturel.fr/agenda",
+    "lat": 44.8892,
+    "lon": 1.2166
+  },
   "liens_utiles": [
     {
       "nom": "Culture Dordogne (Agence culturelle départementale)",
@@ -129,6 +141,34 @@
       "lat": 45.1875,
       "lon": 0.7205,
       "lines": ["Place Francheville, 24000 Périgueux", "Tél. : 05 53 03 92 91"]
+    }
+  ],
+  "marches": [
+    {
+      "nom": "Marché de Montignac-Lascaux",
+      "url": "https://ville-montignac.com/vie-economique/foires-et-marches/le-marche-hebdomadaire",
+      "lines": ["Mercredi et samedi matin, 8h30 à 12h30", "Quai Mérilhou, place Carnot et rues environnantes"]
+    },
+    {
+      "nom": "Marché de Sarlat",
+      "url": "https://www.sarlat-tourisme.com/je-selectionne-mes-activites/agenda/",
+      "lat": 44.8892,
+      "lon": 1.2166,
+      "lines": ["Mercredi et samedi matin, toute l'année", "Rue de la Liberté et centre historique"]
+    },
+    {
+      "nom": "Marché de Brive-la-Gaillarde",
+      "url": "https://www.brive-tourisme.com/fr/nos-marches",
+      "lat": 45.1591,
+      "lon": 1.5336,
+      "lines": ["Mardi, jeudi et samedi matin, à partir de 7h30", "Place du 14-Juillet et halle Georges-Brassens"]
+    },
+    {
+      "nom": "Marché de Périgueux",
+      "url": "https://perigueux.fr/perigueux-au-quotidien/les-marches-de-perigueux.html",
+      "lat": 45.1848,
+      "lon": 0.7211,
+      "lines": ["Mercredi et samedi matin, 8h à 13h", "Place du Coderc jusqu'à la place de la Clautre"]
     }
   ]
 }

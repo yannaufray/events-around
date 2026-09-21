@@ -559,6 +559,58 @@ class TestBucketize(unittest.TestCase):
         self.assertEqual(buckets["À venir"], [e_far])
 
 
+class TestParseSarlatMairieHtml(unittest.TestCase):
+    def setUp(self):
+        self.page = (FIXTURES / "sarlat_mairie_agenda.html").read_text(encoding="utf-8")
+
+    def test_extracts_plausible_events(self):
+        events = al.parse_sarlat_mairie_html(self.page, "Mairie de Sarlat")
+        self.assertGreater(len(events), 50)
+        for e in events:
+            self.assertTrue(e.title.strip())
+            self.assertIsInstance(e.start, datetime)
+            self.assertIsNotNone(e.start.tzinfo)
+            self.assertLessEqual(e.start, e.end)
+            self.assertTrue(e.url.startswith("https://sarlat.fr/agenda/"))
+
+    def test_time_and_place_parsed(self):
+        events = al.parse_sarlat_mairie_html(self.page, "Mairie de Sarlat")
+        lecture = next(e for e in events if "Délire de lire" in e.title)
+        self.assertFalse(lecture.all_day)
+        self.assertEqual((lecture.start.month, lecture.start.day), (9, 22))
+        self.assertEqual((lecture.start.hour, lecture.start.minute), (17, 0))
+        self.assertIn("Médiathèque de Sarlat", lecture.place)
+
+    def test_multiday_range_with_daily_hours(self):
+        events = al.parse_sarlat_mairie_html(self.page, "Mairie de Sarlat")
+        expo = next(e for e in events if "Malraux" in e.title)
+        self.assertEqual((expo.start.month, expo.start.day), (7, 22))
+        self.assertEqual((expo.end.month, expo.end.day), (9, 25))
+
+
+class TestParseSarlatCentreCulturelHtml(unittest.TestCase):
+    def setUp(self):
+        self.page = (FIXTURES / "sarlat_centreculturel_agenda.html").read_text(encoding="utf-8")
+
+    def test_extracts_plausible_events(self):
+        events = al.parse_sarlat_centreculturel_html(self.page, "Centre Culturel de Sarlat", "Centre Culturel de Sarlat")
+        self.assertGreater(len(events), 0)
+        for e in events:
+            self.assertTrue(e.title.strip())
+            self.assertIsInstance(e.start, datetime)
+            self.assertIsNotNone(e.start.tzinfo)
+            self.assertLessEqual(e.start, e.end)
+            self.assertTrue(e.url.startswith("https://www.sarlat-centreculturel.fr/evenement/"))
+            self.assertEqual(e.place, "Centre Culturel de Sarlat")
+
+    def test_time_parsed(self):
+        events = al.parse_sarlat_centreculturel_html(self.page, "Centre Culturel de Sarlat", "Centre Culturel de Sarlat")
+        sers = next(e for e in events if "Gauvain" in e.title)
+        self.assertFalse(sers.all_day)
+        self.assertEqual((sers.start.month, sers.start.day), (9, 26))
+        self.assertEqual((sers.start.hour, sers.start.minute), (20, 30))
+
+
 class TestLibraryHours(unittest.TestCase):
     def test_parses_real_fixture(self):
         page = (FIXTURES / "bibliotheque_page.html").read_text(encoding="utf-8")

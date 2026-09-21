@@ -1095,6 +1095,146 @@ def fetch_perigueux(cfg, w_start, w_end):
     return events
 
 
+# ---------------------------------------------------------------- source 3sexies : Mairie de Sarlat (agenda)
+# Page WordPress/Elementor + JetEngine, rendue côté serveur (pas de JS nécessaire) :
+# chaque événement est un <a class="elementor-element ... e-parent" href=".../agenda/...">
+# qui enveloppe une date (« D mois AAAA » ou « D mois AAAA > D mois AAAA »), une
+# catégorie (jet-listing-dynamic-terms__link) puis 2 ou 3 champs
+# jet-listing-dynamic-field__content dans l'ordre titre / horaire / lieu (le lieu
+# manque parfois -> on le laisse vide plutôt que de deviner). Une seule page charge
+# tout le calendrier affiché (pas de pagination observée), donc pas besoin de suivre
+# des pages suivantes comme pour Brive Tourisme.
+_SRT_ITEM_HREF = re.compile(r'href="(https://sarlat\.fr/agenda/[^"]+)"')
+_SRT_DATE = re.compile(
+    r'elementor-shortcode">\s*(\d{1,2})(?:er)?\s+([a-zéû]+)\s+(\d{4})'
+    r'(?:\s*>\s*(\d{1,2})(?:er)?\s+([a-zéû]+)\s+(\d{4}))?', re.I,
+)
+_SRT_CATEGORY = re.compile(r'jet-listing-dynamic-terms__link">([^<]+)<')
+_SRT_FIELD = re.compile(r'jet-listing-dynamic-field__content"\s*>([^<]*)<')
+_SRT_TIME = re.compile(r'(\d{1,2})h(\d{2})?(?:\s*(?:à|-)\s*(\d{1,2})h(\d{2})?)?')
+
+
+def parse_sarlat_mairie_html(page, source_name):
+    events = []
+    hrefs = [(m.start(), m.group(1)) for m in _SRT_ITEM_HREF.finditer(page)]
+    bounds = [p for p, _ in hrefs] + [len(page)]
+    for i, (_, url) in enumerate(hrefs):
+        block = page[bounds[i]:bounds[i + 1]]
+        dm = _SRT_DATE.search(block)
+        if not dm:
+            continue
+        d1, mo1, y1, d2, mo2, y2 = dm.groups()
+        try:
+            start = _mk_date(d1, mo1, y1)
+            end = _mk_date(d2, mo2, y2, 23, 59) if d2 else None
+        except ValueError:
+            continue
+        fields = [html.unescape(f).strip() for f in _SRT_FIELD.findall(block)]
+        if not fields or not fields[0]:
+            continue
+        title = fields[0]
+        time_text = fields[1] if len(fields) > 1 else ""
+        place = fields[2] if len(fields) > 2 else ""
+        tm = _SRT_TIME.search(time_text)
+        all_day = tm is None
+        if tm:
+            sh, sm_, eh, em_ = tm.groups()
+            start = start.replace(hour=int(sh), minute=int(sm_ or 0))
+            if eh is not None:
+                end = (end or start).replace(hour=int(eh), minute=int(em_ or 0))
+            else:
+                end = end.replace(hour=int(sh), minute=int(sm_ or 0)) if end else start + timedelta(hours=2)
+        elif end is None:
+            end = start + timedelta(days=1)
+        cm = _SRT_CATEGORY.search(block)
+        category = openagenda_category(title, [cm.group(1)] if cm else None, None)
+        events.append(Event(title, start, end, place, url, None, None, [source_name],
+                             all_day=all_day, category=category))
+    return events
+
+
+def fetch_sarlat_mairie(cfg, w_start, w_end):
+    src = cfg.get("sarlat_mairie")
+    if not src:
+        return []
+    try:
+        got = parse_sarlat_mairie_html(http_get(src["url"]), src.get("nom", "Mairie de Sarlat"))
+    except Exception as e:
+        print(f"  Mairie de Sarlat ignorée : {e}", file=sys.stderr)
+        return []
+    events = []
+    for e in got:
+        if "lat" in src:
+            e.lat, e.lon = src["lat"], src["lon"]
+        if e.end >= w_start and e.start <= w_end:
+            events.append(e)
+    return events
+
+
+# ------------------------------------------------------- source 3septies : Centre Culturel de Sarlat (saison)
+# Page HTML classique (Bootstrap), rendue côté serveur : un <div class="card"> par
+# spectacle de la saison, avec une date sans année (« 26 Septembre ») -> même
+# inférence d'année que parse_pole_prehistoire_html (année courante, +1 si déjà
+# passée). Le lieu n'est pas donné dans la carte (c'est l'agenda propre du Centre
+# Culturel : on suppose que tout s'y déroule, sauf mention contraire ailleurs sur la
+# fiche détail qu'on ne suit pas ici).
+_SCC_ITEM = re.compile(r'<div class="card">.*?</div>\s*</div>\s*</div>\s*</div>', re.S)
+_SCC_DATE = re.compile(
+    r'<p class="date">\s*(\d{1,2})\s+([A-Za-zéûîïôâ]+)\s*(?:<span class="heure">\s*(\d{1,2})h(\d{2})?\s*</span>)?',
+    re.I,
+)
+_SCC_TYPE = re.compile(r'<p class="type"><i[^>]*></i>\s*([^<]+)</p>')
+_SCC_TITLE = re.compile(r'<h2><a href="([^"]+)">([^<]+)</a></h2>')
+
+
+def parse_sarlat_centreculturel_html(page, place_name, source_name):
+    events = []
+    now = datetime.now(TZ)
+    for block in _SCC_ITEM.findall(page):
+        dm = _SCC_DATE.search(block)
+        tm = _SCC_TITLE.search(block)
+        if not dm or not tm:
+            continue
+        day, mois, h, mi = dm.groups()
+        try:
+            start = _mk_date(day, mois, now.year)
+        except ValueError:
+            continue
+        if start < now - timedelta(days=1):
+            start = start.replace(year=start.year + 1)
+        all_day = h is None
+        if not all_day:
+            start = start.replace(hour=int(h), minute=int(mi or 0))
+        end = start + (timedelta(days=1) if all_day else timedelta(hours=2))
+        url, title = tm.group(1), html.unescape(tm.group(2)).strip()
+        typm = _SCC_TYPE.search(block)
+        category = openagenda_category(title, [typm.group(1)] if typm else None, None)
+        events.append(Event(title, start, end, place_name, url, None, None, [source_name],
+                             all_day=all_day, category=category))
+    return events
+
+
+def fetch_sarlat_centreculturel(cfg, w_start, w_end):
+    src = cfg.get("sarlat_centreculturel")
+    if not src:
+        return []
+    try:
+        got = parse_sarlat_centreculturel_html(
+            http_get(src["url"]), src.get("nom", "Centre Culturel de Sarlat"),
+            src.get("nom", "Centre Culturel de Sarlat"),
+        )
+    except Exception as e:
+        print(f"  Centre Culturel de Sarlat ignoré : {e}", file=sys.stderr)
+        return []
+    events = []
+    for e in got:
+        if "lat" in src:
+            e.lat, e.lon = src["lat"], src["lon"]
+        if e.end >= w_start and e.start <= w_end:
+            events.append(e)
+    return events
+
+
 # ---------------------------------------------------------------- source 4 : horaires des bibliothèques
 _LIB_DAY_LINE = re.compile(r"^([A-ZÀ-Ü][\w& à-ü-]*?)\s*:\s*(.+)$")
 # variante sans « : » (ex. site de Sarlat : « Mardi 12h30 – 18h30 »)
@@ -1212,6 +1352,23 @@ def fetch_cinema_info(cfg):
             lines.append(info["programme_text"])
         if lines or links:
             out.append({"nom": cine["nom"], "url": cine["url"], "lines": lines, "links": links, "distance": dist})
+    return out
+
+
+# ---------------------------------------------------------------- source 6 : marchés (lieux, horaires récurrents)
+# Comme les cinémas multiplexes (site JS, pas de programme structuré fiable), les
+# marchés sont hebdomadaires et n'ont pas de "date" individuelle à générer : plutôt
+# que de fabriquer de fausses occurrences futures, on les traite comme des lieux à
+# horaires fixes (cfg["marches"], saisi à la main dans config.json, "lines" déjà
+# prêtes) — jours/horaires vérifiés auprès des sites officiels des villes concernées.
+def fetch_marches(cfg):
+    out = []
+    for m in cfg.get("marches", []):
+        keep, dist = _place_distance(cfg, m)
+        if keep == "drop":
+            continue
+        out.append({"nom": m["nom"], "url": m.get("url", ""), "lines": m.get("lines", []),
+                     "links": m.get("links", []), "distance": dist})
     return out
 
 
@@ -1508,7 +1665,7 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=()):
     if buckets["À venir"]:
         section_defs.append(("À venir", None, None))
     if lieux:
-        section_defs.append(("Lieux culturels", None, None))
+        section_defs.append(("Lieux & marchés", None, None))
 
     # Trois menus déroulants alignés (aller à / catégorie / rayon) plutôt que des
     # rangées de pastilles empilées : un seul style, une seule hauteur de ligne,
@@ -1581,7 +1738,7 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=()):
 
     if lieux:
         body += (
-            f'<section><h2 id="{_slug("Lieux culturels")}">Lieux culturels</h2><ul>'
+            f'<section><h2 id="{_slug("Lieux & marchés")}">Lieux & marchés</h2><ul>'
             + "".join(_place_card(p) for p in lieux)
             + "</ul></section>"
         )
@@ -2002,9 +2159,15 @@ def main():
     got = fetch_perigueux(cfg, w_start, w_end)
     print(f"  Ville de Périgueux : {len(got)}")
     events += got
+    got = fetch_sarlat_mairie(cfg, w_start, w_end)
+    print(f"  Mairie de Sarlat : {len(got)}")
+    events += got
+    got = fetch_sarlat_centreculturel(cfg, w_start, w_end)
+    print(f"  Centre Culturel de Sarlat : {len(got)}")
+    events += got
 
-    lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg)
-    print(f"  Lieux culturels : {len(lieux)}")
+    lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg) + fetch_marches(cfg)
+    print(f"  Lieux & marchés : {len(lieux)}")
     autres_liens = [
         {"nom": s["nom"], "url": s.get("url"), "lines": s.get("lignes", []),
          "links": [tuple(l) for l in s.get("liens", [])]}
