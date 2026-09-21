@@ -1768,22 +1768,45 @@ function renderSyncStatus(){{
     btn.style.display = '';
   }}
 }}
-function fetchAndMergeFavs(done){{
+// Le serveur est la seule source de vérité dès que la synchro est active : à
+// chaque chargement on remplace l'état local par celui du serveur (pas de
+// fusion) ; à chaque clic on pousse tout de suite le changement au serveur.
+// C'est ce qui évite qu'un appareil resté en retard ne "ressuscite" un favori
+// supprimé ailleurs. Contrepartie assumée : un clic fait hors-ligne peut être
+// perdu au rechargement suivant si le push n'est jamais parti.
+function fetchFavsFromServer(done){{
   var key = syncKey();
   if (!SYNC_URL || !key) {{ done(); return; }}
   fetch(SYNC_URL + '/favoris?key=' + encodeURIComponent(key)).then(function(r){{
+    return r.ok ? r.json() : null;
+  }}).then(function(serverFavs){{
+    if (serverFavs) {{
+      favs = serverFavs;
+      saveFavs(favs);
+    }}
+    done();
+  }}).catch(function(err){{ done(); }});
+}}
+// Activation de la synchro sur un appareil qui avait déjà des favoris locaux
+// (avant que la synchro n'existe, ou saisis hors-ligne) : ceux absents du
+// serveur sont poussés une bonne fois pour ne pas les perdre, puis l'état
+// local devient l'union — après quoi les chargements suivants redeviennent
+// une simple lecture du serveur, sans fusion.
+function activateSync(code){{
+  var localFavs = favs;
+  setSyncKey(code);
+  fetch(SYNC_URL + '/favoris?key=' + encodeURIComponent(code)).then(function(r){{
     return r.ok ? r.json() : {{}};
   }}).then(function(serverFavs){{
     serverFavs = serverFavs || {{}};
-    // les favoris connus seulement en local (ex. juste après activation de la
-    // synchro sur cet appareil) sont poussés vers le serveur pour ne pas les perdre
-    Object.keys(favs).forEach(function(id){{
-      if (!serverFavs[id]) pushFavori(id, favs[id]);
+    Object.keys(localFavs).forEach(function(id){{
+      if (!serverFavs[id]) pushFavori(id, localFavs[id]);
     }});
-    favs = Object.assign({{}}, serverFavs, favs);
+    favs = Object.assign({{}}, serverFavs, localFavs);
     saveFavs(favs);
-    done();
-  }}).catch(function(err){{ done(); }});
+    renderFavoris();
+    renderSyncStatus();
+  }}).catch(function(err){{ renderFavoris(); renderSyncStatus(); }});
 }}
 
 function markFavButtons(){{
@@ -1851,10 +1874,7 @@ document.body.addEventListener('click', function(ev){{
   }}
   if (ev.target.closest('#sync-activate')) {{
     var code = window.prompt('Code de synchro partagée (donné une seule fois entre les deux personnes concernées) :');
-    if (code) {{
-      setSyncKey(code.trim());
-      fetchAndMergeFavs(function(){{ renderFavoris(); renderSyncStatus(); }});
-    }}
+    if (code) {{ activateSync(code.trim()); }}
     return;
   }}
   if (ev.target.closest('#sync-deactivate')) {{
@@ -1883,7 +1903,7 @@ document.body.addEventListener('click', function(ev){{
 }});
 
 renderSyncStatus();
-fetchAndMergeFavs(renderFavoris);
+fetchFavsFromServer(renderFavoris);
 </script>
 </body></html>"""
     Path(path).write_text(page, encoding="utf-8")
