@@ -88,6 +88,20 @@ class TestLongRunning(unittest.TestCase):
         self.assertFalse(out[0].long_running)
 
 
+class TestFmtWhen(unittest.TestCase):
+    def test_short_multi_day_event_shows_both_dates(self):
+        # vide-grenier samedi + dimanche : ne doit pas donner l'impression d'un
+        # événement déjà en cours depuis longtemps.
+        e = al.Event("Vide-grenier", dt(2026, 6, 6, 9), dt(2026, 6, 7, 18))
+        al.mark_long_running([e])
+        self.assertEqual(al._fmt_when(e), "du samedi 06/06 au dimanche 07/06")
+
+    def test_long_running_event_shows_end_date_only(self):
+        e = al.Event("Exposition", dt(2026, 1, 1), dt(2026, 12, 31))
+        al.mark_long_running([e])
+        self.assertEqual(al._fmt_when(e), "jusqu'au jeudi 31/12")
+
+
 class TestIcs(unittest.TestCase):
     def test_write_and_reparse_roundtrip(self, tmp_path=None):
         import tempfile

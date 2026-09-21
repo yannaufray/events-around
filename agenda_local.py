@@ -1047,6 +1047,13 @@ JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 def _fmt_when(e):
     s, en = e.start.astimezone(TZ), e.end.astimezone(TZ)
     if e.long_running:
+        # « jusqu'au ... » seul est ambigu pour un événement court sur 2-4 jours (ex.
+        # vide-grenier samedi + dimanche) : avant qu'il ne commence, on dirait qu'il
+        # est déjà en cours depuis longtemps. Réservé aux événements vraiment longs
+        # (expos, saisons) ; en dessous, on affiche les deux bornes.
+        span_days = (en.date() - s.date()).days
+        if 1 <= span_days <= 3:
+            return f"du {JOURS[s.weekday()]} {s:%d/%m} au {JOURS[en.weekday()]} {en:%d/%m}"
         return f"jusqu'au {JOURS[en.weekday()]} {en:%d/%m}"
     if e.all_day:
         return f"{JOURS[s.weekday()]} {s:%d/%m} · horaire non précisé"
