@@ -765,7 +765,7 @@ def fetch_web_pages(cfg, w_start, w_end):
                 try:
                     got = parse_montignac_html(http_get(url), src["nom"])
                 except Exception as e:
-                    print(f"  Page « {url} » ignorée : {e}", file=sys.stderr)
+                    _warn(f"Page « {url} » ignorée : {e}")
                     break
                 slug = base.rstrip("/").rsplit("/", 1)[-1]
                 category = MAIRIE_CATEGORY_MAP.get(slug, "Autre")
@@ -922,7 +922,7 @@ def fetch_pole_prehistoire(cfg, w_start, w_end):
     try:
         got = parse_pole_prehistoire_html(http_get(src["url"]), src["url"], src.get("nom", "Pôle international de la Préhistoire"))
     except Exception as e:
-        print(f"  Pôle international de la Préhistoire ignoré : {e}", file=sys.stderr)
+        _warn(f"Pôle international de la Préhistoire ignoré : {e}")
         return []
     for e in got:
         if e.lat is None and "lat" in src:
@@ -1000,7 +1000,7 @@ def fetch_brivetourisme(cfg, w_start, w_end):
         try:
             got = parse_brivetourisme_html(http_get(url), base_url)
         except Exception as e:
-            print(f"  Brive Tourisme (page {page_num}) ignorée : {e}", file=sys.stderr)
+            _warn(f"Brive Tourisme (page {page_num}) ignorée : {e}")
             break
         if not got:
             break
@@ -1084,7 +1084,7 @@ def fetch_perigueux(cfg, w_start, w_end):
     try:
         got = parse_perigueux_rss(http_get(src["url"]), src.get("nom", "Ville de Périgueux"))
     except Exception as e:
-        print(f"  Ville de Périgueux ignorée : {e}", file=sys.stderr)
+        _warn(f"Ville de Périgueux ignorée : {e}")
         return []
     events = []
     for e in got:
@@ -1160,7 +1160,7 @@ def fetch_sarlat_mairie(cfg, w_start, w_end):
     try:
         got = parse_sarlat_mairie_html(http_get(src["url"]), src.get("nom", "Mairie de Sarlat"))
     except Exception as e:
-        print(f"  Mairie de Sarlat ignorée : {e}", file=sys.stderr)
+        _warn(f"Mairie de Sarlat ignorée : {e}")
         return []
     events = []
     for e in got:
@@ -1224,7 +1224,7 @@ def fetch_sarlat_centreculturel(cfg, w_start, w_end):
             src.get("nom", "Centre Culturel de Sarlat"),
         )
     except Exception as e:
-        print(f"  Centre Culturel de Sarlat ignoré : {e}", file=sys.stderr)
+        _warn(f"Centre Culturel de Sarlat ignoré : {e}")
         return []
     events = []
     for e in got:
@@ -1641,7 +1641,7 @@ def _place_card(place):
     return f'<li{dist_attr}><div class="t">{name}</div><div class="m">{lines}{links}</div></li>'
 
 
-def write_html(events, path, cfg, now, lieux=(), autres_liens=()):
+def write_html(events, path, cfg, now, lieux=(), autres_liens=(), source_stats=None):
     wk_start, wk_end = weekend_window(now)
     week_start, week_end = week_window(now)
     next_wk_start, next_wk_end = next_weekend_window(now)
@@ -1782,6 +1782,20 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=()):
     if has_datatourisme:
         footer += '<p class="s">Données : DATAtourisme, Licence Ouverte Etalab.</p>'
     footer += '<p class="s">Pages de la mairie de Montignac : usage personnel, contenu non republié.</p>'
+
+    # Diagnostic pour le dev : un commentaire HTML (invisible à l'affichage, visible
+    # via « voir le code source »), plus un panneau accessible en ajoutant #diag à
+    # l'URL — pratique sur mobile où « voir le code source » n'est pas commode.
+    # Pas grave si un visiteur tombe dessus : juste des compteurs par source.
+    diag_stats = source_stats or {}
+    diag_lines = [f"généré {now.strftime('%Y-%m-%d %H:%M')} — sources :"]
+    diag_lines += [
+        f"  {'⚠ ' if not n and lbl in _SOURCES_TOUJOURS_GARNIES else '  '}{lbl} : {n}"
+        for lbl, n in diag_stats.items()
+    ]
+    diag_comment = "<!--\n" + "\n".join(diag_lines) + "\n-->"
+    diag_json = json.dumps(diag_stats, ensure_ascii=False)
+    diag_toujours_json = json.dumps(sorted(_SOURCES_TOUJOURS_GARNIES), ensure_ascii=False)
 
     page = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorties autour de {label}</title>
@@ -2088,7 +2102,49 @@ document.body.addEventListener('click', function(ev){{
 
 renderSyncStatus();
 fetchFavsFromServer(renderFavoris);
+
+var diagStats = {diag_json};
+var diagToujours = {diag_toujours_json};
+// sources qui devraient toujours répondre et qui sont tombées à 0 : c'est ça,
+// et seulement ça, qui distingue « ça va » de « ça va pas ».
+var diagWarnKeys = Object.keys(diagStats).filter(function(k) {{
+  return !diagStats[k] && diagToujours.indexOf(k) !== -1;
+}});
+
+function showDiagPanel() {{
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:60vh;overflow:auto;'
+    + 'z-index:9999;background:#111;font:12px/1.5 monospace;opacity:.97;';
+  var head = document.createElement('div');
+  head.textContent = diagWarnKeys.length
+    ? '⚠ ' + diagWarnKeys.length + ' source(s) à vérifier : ' + diagWarnKeys.join(', ')
+    : '✅ Toutes les sources répondent';
+  head.style.cssText = 'padding:8px 12px;font-weight:bold;border-bottom:1px solid #333;'
+    + 'color:' + (diagWarnKeys.length ? '#ff8a8a' : '#7fdc7f') + ';';
+  var pre = document.createElement('pre');
+  pre.textContent = Object.keys(diagStats).map(function(k) {{
+    return (diagWarnKeys.indexOf(k) !== -1 ? '⚠ ' : '  ') + k + ' : ' + diagStats[k];
+  }}).join('\\n');
+  pre.style.cssText = 'margin:0;padding:8px 12px;white-space:pre-wrap;color:#7fdc7f;';
+  wrap.appendChild(head);
+  wrap.appendChild(pre);
+  wrap.addEventListener('click', function() {{ wrap.remove(); }});
+  document.body.appendChild(wrap);
+}}
+if (location.hash.indexOf('diag') !== -1) showDiagPanel();
+
+// petit point en bas à droite : gris et quasi invisible si tout va bien, rouge
+// et plus visible si une source qui devrait toujours répondre est à 0 — pas
+// besoin d'ouvrir le panneau pour savoir si ça va, juste un coup d'œil au coin.
+var diagDot = document.createElement('div');
+diagDot.setAttribute('aria-hidden', 'true');
+diagDot.style.cssText = 'position:fixed;right:6px;bottom:6px;width:14px;height:14px;'
+  + 'border-radius:50%;z-index:9998;cursor:pointer;'
+  + (diagWarnKeys.length ? 'background:#e0473a;opacity:.7;' : 'background:#888;opacity:.15;');
+diagDot.addEventListener('click', showDiagPanel);
+document.body.appendChild(diagDot);
 </script>
+{diag_comment}
 </body></html>"""
     Path(path).write_text(page, encoding="utf-8")
 
@@ -2110,6 +2166,37 @@ def probe(cfg):
         print("  aucun résultat : élargis le rayon, ou envoie-moi ce message pour ajuster la requête")
 
 
+# Sources scrapées dont on attend presque toujours au moins un événement dans
+# la fenêtre de récupération (pages d'agenda tenues à jour) : un compte à 0 est
+# le signe le plus probable d'une page dont le HTML a changé, pas d'un agenda
+# vide. On l'affiche comme avertissement GitHub Actions (visible dans l'onglet
+# Actions sans faire échouer le job, puisqu'une source en moins ne doit pas
+# empêcher la publication des autres) plutôt que de le laisser filer en silence.
+_SOURCES_TOUJOURS_GARNIES = {
+    "Pages web",
+    "Pôle international de la Préhistoire",
+    "Brive Tourisme",
+    "Ville de Périgueux",
+    "Mairie de Sarlat",
+    "Centre Culturel de Sarlat",
+}
+
+
+def _warn(msg):
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::warning::{msg}")
+    else:
+        print(f"  ATTENTION : {msg}", file=sys.stderr)
+
+
+def _log_source(label, got, stats=None):
+    print(f"  {label} : {len(got)}")
+    if stats is not None:
+        stats[label] = len(got)
+    if not got and label in _SOURCES_TOUJOURS_GARNIES:
+        _warn(f"{label} a renvoyé 0 événement — le site a peut-être changé de structure")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(Path(__file__).with_name("config.json")))
@@ -2124,46 +2211,47 @@ def main():
 
     print("Récupération…")
     events = []
+    source_stats = {}
     if cfg.get("sources", {}).get("openagenda", True):
         try:
             got = fetch_openagenda(cfg, w_start, w_end)
-            print(f"  OpenAgenda : {len(got)}")
+            _log_source("OpenAgenda", got, source_stats)
             events += got
         except Exception as e:  # une source cassée ne bloque pas les autres
-            print(f"  OpenAgenda ignorée : {e}", file=sys.stderr)
+            _warn(f"OpenAgenda ignorée : {e}")
     if cfg.get("sources", {}).get("datatourisme", True):
         try:
             got = fetch_datatourisme(cfg, w_start, w_end)
-            print(f"  DATAtourisme : {len(got)}")
+            _log_source("DATAtourisme", got, source_stats)
             events += got
         except Exception as e:
-            print(f"  DATAtourisme ignorée : {e}", file=sys.stderr)
+            _warn(f"DATAtourisme ignorée : {e}")
     got = fetch_feeds(cfg, w_start, w_end)
-    print(f"  Flux iCal : {len(got)}")
+    _log_source("Flux iCal", got, source_stats)
     events += got
     got = fetch_web_pages(cfg, w_start, w_end)
-    print(f"  Pages web : {len(got)}")
+    _log_source("Pages web", got, source_stats)
     events += got
     try:
         got = fetch_leberou(cfg, w_start, w_end)
         print(f"  Festival Le Lébérou : {len(got)}")
         events += got
     except Exception as e:
-        print(f"  Festival Le Lébérou ignoré : {e}", file=sys.stderr)
+        _warn(f"Festival Le Lébérou ignoré : {e}")
     got = fetch_pole_prehistoire(cfg, w_start, w_end)
-    print(f"  Pôle international de la Préhistoire : {len(got)}")
+    _log_source("Pôle international de la Préhistoire", got, source_stats)
     events += got
     got = fetch_brivetourisme(cfg, w_start, w_end)
-    print(f"  Brive Tourisme : {len(got)}")
+    _log_source("Brive Tourisme", got, source_stats)
     events += got
     got = fetch_perigueux(cfg, w_start, w_end)
-    print(f"  Ville de Périgueux : {len(got)}")
+    _log_source("Ville de Périgueux", got, source_stats)
     events += got
     got = fetch_sarlat_mairie(cfg, w_start, w_end)
-    print(f"  Mairie de Sarlat : {len(got)}")
+    _log_source("Mairie de Sarlat", got, source_stats)
     events += got
     got = fetch_sarlat_centreculturel(cfg, w_start, w_end)
-    print(f"  Centre Culturel de Sarlat : {len(got)}")
+    _log_source("Centre Culturel de Sarlat", got, source_stats)
     events += got
 
     lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg) + fetch_marches(cfg)
@@ -2178,7 +2266,7 @@ def main():
     out = Path(cfg.get("dossier_sortie", "sortie"))
     out.mkdir(exist_ok=True)
     write_ics(events, out / "agenda.ics", now)
-    write_html(events, out / "index.html", cfg, now, lieux, autres_liens)
+    write_html(events, out / "index.html", cfg, now, lieux, autres_liens, source_stats)
     print(f"{len(events)} événements -> {out}/agenda.ics et {out}/index.html")
 
 
