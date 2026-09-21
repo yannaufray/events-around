@@ -59,6 +59,12 @@
     "lat": 45.1591,
     "lon": 1.5336
   },
+  "perigueux": {
+    "nom": "Ville de Périgueux",
+    "url": "https://perigueux.fr/agenda/flux-agenda/rss.xml",
+    "lat": 45.1848,
+    "lon": 0.7211
+  },
   "liens_utiles": [
     {
       "nom": "Culture Dordogne (Agence culturelle départementale)",

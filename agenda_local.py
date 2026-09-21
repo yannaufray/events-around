@@ -27,6 +27,7 @@ import sys
 import time
 import unicodedata
 from dataclasses import dataclass, field
+from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -1013,6 +1014,87 @@ def fetch_brivetourisme(cfg, w_start, w_end):
     return events
 
 
+# ---------------------------------------------------------------- source 3quinquies : Ville de Périgueux (agenda)
+# Flux RSS dédié (perigueux.fr/agenda/flux-agenda/rss.xml) : un <item> par
+# événement, avec <ev:startdate>/<ev:enddate> (format RFC822, "Tue, 11 May 2027
+# 20:00:00 +0200"). Le XML est invalide (préfixe "ev:" jamais déclaré dans le
+# <rss> racine) -> xml.etree refuse de le parser, d'où le parseur regex ci-dessous,
+# sur le modèle de parse_brivetourisme_html. Pas de lat/lon par item (ni dans le
+# flux ni sur la page) : comme pour Brive Tourisme, tous les items sont approximés
+# avec les coordonnées du centre-ville de Périgueux (cfg["perigueux"]["lat"/"lon"]).
+# Pour une poignée d'animations récurrentes (~6 items sur 114 au moment de
+# l'écriture, ex. « Les dimanches de la Clautre »), <ev:startdate>/<ev:enddate>
+# contiennent plusieurs dates à la suite (bug d'export du site, pas un format
+# documenté) : on ne garde que la première occurrence de chaque tag plutôt que
+# d'essayer de deviner les suivantes -> date réelle et non trompeuse, juste
+# incomplète pour la suite de la série (comme pole_prehistoire pour ses dates
+# sans année).
+_PGX_ITEM = re.compile(r"<item>(.*?)</item>", re.S)
+_PGX_TITLE = re.compile(r"<title><!\[CDATA\[(.*?)\]\]></title>", re.S)
+_PGX_LINK = re.compile(r"<link>\s*(.*?)\s*</link>", re.S)
+_PGX_IMAGE = re.compile(r"<image>\s*(.*?)\s*</image>", re.S)
+_PGX_DESCRIPTION = re.compile(r"<description><!\[CDATA\[(.*?)\]\]></description>", re.S)
+_PGX_CATEGORY = re.compile(r"<category[^>]*>([^<]+)</category>")
+_PGX_STARTDATE = re.compile(r"<ev:startdate>(.*?)</ev:startdate>", re.S)
+_PGX_ENDDATE = re.compile(r"<ev:enddate>(.*?)</ev:enddate>", re.S)
+_PGX_DATE = re.compile(r"[A-Za-z]{3}, \d{1,2} [A-Za-z]{3} \d{4} [\d:]{8} [+-]\d{4}")
+
+
+def _pgx_first_date(block):
+    dates = _PGX_DATE.findall(block)
+    if not dates:
+        return None
+    return parsedate_to_datetime(dates[0]).astimezone(TZ)
+
+
+def parse_perigueux_rss(page, source_name):
+    events = []
+    for block in _PGX_ITEM.findall(page):
+        tm = _PGX_TITLE.search(block)
+        sm = _PGX_STARTDATE.search(block)
+        if not tm or not sm:
+            continue
+        start = _pgx_first_date(sm.group(1))
+        if start is None:
+            continue
+        em = _PGX_ENDDATE.search(block)
+        end = _pgx_first_date(em.group(1)) if em else None
+        if end is None or end <= start:
+            end = start + timedelta(hours=2)
+        title = html.unescape(re.sub(r"\s+", " ", tm.group(1))).strip()
+        lm = _PGX_LINK.search(block)
+        url = html.unescape(lm.group(1)).strip() if lm else ""
+        im = _PGX_IMAGE.search(block)
+        image = html.unescape(im.group(1)).strip() if im else ""
+        dm = _PGX_DESCRIPTION.search(block)
+        description = ""
+        if dm:
+            description = html.unescape(re.sub(r"<[^>]+>", " ", dm.group(1)))
+            description = re.sub(r"\s+", " ", description).strip()
+        category = openagenda_category(title, _PGX_CATEGORY.findall(block), None)
+        events.append(Event(title, start, end, "Périgueux", url, None, None, [source_name],
+                             category=category, description=description, image=image))
+    return events
+
+
+def fetch_perigueux(cfg, w_start, w_end):
+    src = cfg.get("perigueux")
+    if not src:
+        return []
+    try:
+        got = parse_perigueux_rss(http_get(src["url"]), src.get("nom", "Ville de Périgueux"))
+    except Exception as e:
+        print(f"  Ville de Périgueux ignorée : {e}", file=sys.stderr)
+        return []
+    events = []
+    for e in got:
+        if "lat" in src:
+            e.lat, e.lon = src["lat"], src["lon"]
+        if e.end >= w_start and e.start <= w_end:
+            events.append(e)
+    return events
+
+
 # ---------------------------------------------------------------- source 4 : horaires des bibliothèques
 _LIB_DAY_LINE = re.compile(r"^([A-ZÀ-Ü][\w& à-ü-]*?)\s*:\s*(.+)$")
 # variante sans « : » (ex. site de Sarlat : « Mardi 12h30 – 18h30 »)
@@ -1869,6 +1951,9 @@ def main():
     events += got
     got = fetch_brivetourisme(cfg, w_start, w_end)
     print(f"  Brive Tourisme : {len(got)}")
+    events += got
+    got = fetch_perigueux(cfg, w_start, w_end)
+    print(f"  Ville de Périgueux : {len(got)}")
     events += got
 
     lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg)

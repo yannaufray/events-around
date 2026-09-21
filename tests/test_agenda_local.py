@@ -246,6 +246,41 @@ class TestParseBriveTourismeHtml(unittest.TestCase):
         self.assertEqual({e.start.day for e in tresors}, {21, 22})
 
 
+class TestParsePerigueuxRss(unittest.TestCase):
+    def setUp(self):
+        self.page = (FIXTURES / "perigueux_rss.xml").read_text(encoding="utf-8")
+
+    def test_extracts_plausible_events(self):
+        events = al.parse_perigueux_rss(self.page, "Ville de Périgueux")
+        self.assertGreater(len(events), 100)
+        for e in events:
+            self.assertTrue(e.title.strip())
+            self.assertIsInstance(e.start, datetime)
+            self.assertIsNotNone(e.start.tzinfo)
+            self.assertLessEqual(e.start, e.end)
+            self.assertIsNone(e.lat)  # pas de coordonnées par item -> approximées en aval
+
+    def test_single_date_parsed(self):
+        events = al.parse_perigueux_rss(self.page, "Ville de Périgueux")
+        e = next(ev for ev in events if "RABBIT HOLE" in ev.title)
+        self.assertEqual((e.start.year, e.start.month, e.start.day), (2027, 5, 11))
+        self.assertEqual((e.start.hour, e.start.minute), (20, 0))
+        self.assertEqual(e.url, "https://www.odyssee-perigueux.fr/spectacles-de-la-saison/rabbit-hole/")
+
+    def test_start_and_end_parsed(self):
+        events = al.parse_perigueux_rss(self.page, "Ville de Périgueux")
+        e = next(ev for ev in events if "VIDE GRENIER" in ev.title)
+        self.assertEqual((e.start.hour, e.start.minute), (9, 0))
+        self.assertEqual((e.end.hour, e.end.minute), (17, 0))
+
+    def test_recurring_series_keeps_only_first_occurrence(self):
+        # le flux tasse parfois plusieurs dates dans un même <ev:startdate>/<ev:enddate>
+        # (bug d'export du site) -> on ne garde que la première, pas de date inventée
+        events = al.parse_perigueux_rss(self.page, "Ville de Périgueux")
+        e = next(ev for ev in events if "gymnastique" in ev.title)
+        self.assertEqual((e.start.year, e.start.month, e.start.day), (2026, 10, 4))
+
+
 class TestParseLeberouSubpage(unittest.TestCase):
     def test_extracts_date_place_time(self):
         page = (FIXTURES / "leberou_conteur_page.html").read_text(encoding="utf-8")
