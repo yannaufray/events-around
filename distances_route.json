@@ -1,0 +1,2755 @@
+{
+ "24291": {
+  "nom": "Montignac-Lascaux",
+  "lat": 45.0644,
+  "lon": 1.1589,
+  "vol_oiseau_km": 0.66,
+  "route_km": 1.02
+ },
+ "24014": {
+  "nom": "Aubas",
+  "lat": 45.0804,
+  "lon": 1.1992,
+  "vol_oiseau_km": 2.97,
+  "route_km": 4.59
+ },
+ "24174": {
+  "nom": "Fanlac",
+  "lat": 45.0731,
+  "lon": 1.0944,
+  "vol_oiseau_km": 5.72,
+  "route_km": 8.87
+ },
+ "24175": {
+  "nom": "Les Farges",
+  "lat": 45.1144,
+  "lon": 1.1954,
+  "vol_oiseau_km": 5.76,
+  "route_km": 6.99
+ },
+ "24018": {
+  "nom": "Auriac-du-Périgord",
+  "lat": 45.1116,
+  "lon": 1.1286,
+  "vol_oiseau_km": 5.82,
+  "route_km": 8.51
+ },
+ "24563": {
+  "nom": "Valojoulx",
+  "lat": 45.0144,
+  "lon": 1.1498,
+  "vol_oiseau_km": 5.97,
+  "route_km": 8.46
+ },
+ "24552": {
+  "nom": "Thonac",
+  "lat": 45.0358,
+  "lon": 1.1013,
+  "vol_oiseau_km": 6.18,
+  "route_km": 8.49
+ },
+ "24364": {
+  "nom": "Coly-Saint-Amand",
+  "lat": 45.0634,
+  "lon": 1.2456,
+  "vol_oiseau_km": 6.21,
+  "route_km": 10.25
+ },
+ "24130": {
+  "nom": "Condat-sur-Vézère",
+  "lat": 45.1067,
+  "lon": 1.2278,
+  "vol_oiseau_km": 6.54,
+  "route_km": 11.66
+ },
+ "24106": {
+  "nom": "La Chapelle-Aubareil",
+  "lat": 45.0042,
+  "lon": 1.1897,
+  "vol_oiseau_km": 7.18,
+  "route_km": 8.1,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24020": {
+  "nom": "La Bachellerie",
+  "lat": 45.1313,
+  "lon": 1.1612,
+  "vol_oiseau_km": 7.2,
+  "route_km": 10.73
+ },
+ "24443": {
+  "nom": "Saint-Léon-sur-Vézère",
+  "lat": 45.0224,
+  "lon": 1.0821,
+  "vol_oiseau_km": 8.27,
+  "route_km": 11.85
+ },
+ "24531": {
+  "nom": "Sergeac",
+  "lat": 45.0003,
+  "lon": 1.1125,
+  "vol_oiseau_km": 8.52,
+  "route_km": 10.51
+ },
+ "24229": {
+  "nom": "Le Lardin-Saint-Lazare",
+  "lat": 45.1365,
+  "lon": 1.2282,
+  "vol_oiseau_km": 9.14,
+  "route_km": 11.9
+ },
+ "24025": {
+  "nom": "Bars",
+  "lat": 45.0949,
+  "lon": 1.0492,
+  "vol_oiseau_km": 9.74,
+  "route_km": 16.8
+ },
+ "24412": {
+  "nom": "Saint-Geniès",
+  "lat": 45.0027,
+  "lon": 1.2539,
+  "vol_oiseau_km": 9.88,
+  "route_km": 12.8,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24330": {
+  "nom": "Plazac",
+  "lat": 45.0483,
+  "lon": 1.0383,
+  "vol_oiseau_km": 10.29,
+  "route_km": 17.05
+ },
+ "24544": {
+  "nom": "Tamniès",
+  "lat": 44.9732,
+  "lon": 1.1467,
+  "vol_oiseau_km": 10.51,
+  "route_km": 15.07
+ },
+ "24324": {
+  "nom": "Peyrignac",
+  "lat": 45.1611,
+  "lon": 1.1934,
+  "vol_oiseau_km": 10.7,
+  "route_km": 13.61
+ },
+ "24085": {
+  "nom": "La Cassagne",
+  "lat": 45.0562,
+  "lon": 1.3065,
+  "vol_oiseau_km": 11.04,
+  "route_km": 18.38
+ },
+ "24030": {
+  "nom": "Beauregard-de-Terrasson",
+  "lat": 45.1557,
+  "lon": 1.2293,
+  "vol_oiseau_km": 11.05,
+  "route_km": 14.28
+ },
+ "24550": {
+  "nom": "Thenon",
+  "lat": 45.1354,
+  "lon": 1.0631,
+  "vol_oiseau_km": 11.16,
+  "route_km": 13.72
+ },
+ "24012": {
+  "nom": "Archignac",
+  "lat": 45.0162,
+  "lon": 1.2922,
+  "vol_oiseau_km": 11.35,
+  "route_km": 17.13
+ },
+ "24019": {
+  "nom": "Azerat",
+  "lat": 45.1585,
+  "lon": 1.1008,
+  "vol_oiseau_km": 11.44,
+  "route_km": 17.06
+ },
+ "24326": {
+  "nom": "Peyzac-le-Moustier",
+  "lat": 44.983,
+  "lon": 1.0795,
+  "vol_oiseau_km": 11.56,
+  "route_km": 15.35
+ },
+ "24547": {
+  "nom": "Terrasson-Lavilledieu",
+  "lat": 45.118,
+  "lon": 1.3022,
+  "vol_oiseau_km": 12.07,
+  "route_km": 17.7,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24491": {
+  "nom": "Saint-Rabier",
+  "lat": 45.1744,
+  "lon": 1.1384,
+  "vol_oiseau_km": 12.18,
+  "route_km": 16.71
+ },
+ "24252": {
+  "nom": "Marcillac-Saint-Quentin",
+  "lat": 44.9532,
+  "lon": 1.2024,
+  "vol_oiseau_km": 12.93,
+  "route_km": 22.16
+ },
+ "24116": {
+  "nom": "Châtres",
+  "lat": 45.1859,
+  "lon": 1.1959,
+  "vol_oiseau_km": 13.45,
+  "route_km": 20.33
+ },
+ "24153": {
+  "nom": "La Dornac",
+  "lat": 45.0717,
+  "lon": 1.3421,
+  "vol_oiseau_km": 13.79,
+  "route_km": 27.15
+ },
+ "24559": {
+  "nom": "Tursac",
+  "lat": 44.9741,
+  "lon": 1.0435,
+  "vol_oiseau_km": 14.13,
+  "route_km": 19.04
+ },
+ "24113": {
+  "nom": "La Chapelle-Saint-Jean",
+  "lat": 45.1943,
+  "lon": 1.1661,
+  "vol_oiseau_km": 14.19,
+  "route_km": 19.81
+ },
+ "24255": {
+  "nom": "Marquay",
+  "lat": 44.9417,
+  "lon": 1.1284,
+  "vol_oiseau_km": 14.22,
+  "route_km": 23.61
+ },
+ "24183": {
+  "nom": "Fleurac",
+  "lat": 44.9981,
+  "lon": 1.0086,
+  "vol_oiseau_km": 14.58,
+  "route_km": 25.58
+ },
+ "24580": {
+  "nom": "Villac",
+  "lat": 45.1873,
+  "lon": 1.2511,
+  "vol_oiseau_km": 14.96,
+  "route_km": 22.29
+ },
+ "24392": {
+  "nom": "Saint-Crépin-et-Carlucet",
+  "lat": 44.9539,
+  "lon": 1.2709,
+  "vol_oiseau_km": 14.98,
+  "route_km": 21.44
+ },
+ "24004": {
+  "nom": "Ajat",
+  "lat": 45.1603,
+  "lon": 1.0289,
+  "vol_oiseau_km": 15.01,
+  "route_km": 18.55
+ },
+ "24317": {
+  "nom": "Paulin",
+  "lat": 44.9969,
+  "lon": 1.3314,
+  "vol_oiseau_km": 15.09,
+  "route_km": 23.24
+ },
+ "24215": {
+  "nom": "Jayac",
+  "lat": 45.0293,
+  "lon": 1.3518,
+  "vol_oiseau_km": 15.12,
+  "route_km": 22.86
+ },
+ "24188": {
+  "nom": "Fossemagne",
+  "lat": 45.1172,
+  "lon": 0.9868,
+  "vol_oiseau_km": 15.2,
+  "route_km": 23.02
+ },
+ "19066": {
+  "nom": "Cublac",
+  "lat": 45.1593,
+  "lon": 1.3107,
+  "vol_oiseau_km": 15.29,
+  "route_km": 20.27
+ },
+ "24356": {
+  "nom": "Rouffignac-Saint-Cernin-de-Reilhac",
+  "lat": 45.0486,
+  "lon": 0.9696,
+  "vol_oiseau_km": 15.61,
+  "route_km": 21.2,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24117": {
+  "nom": "Les Coteaux Périgourdins",
+  "lat": 45.092,
+  "lon": 1.3646,
+  "vol_oiseau_km": 15.79,
+  "route_km": 25.26
+ },
+ "24341": {
+  "nom": "Proissans",
+  "lat": 44.9293,
+  "lon": 1.2465,
+  "vol_oiseau_km": 16.52,
+  "route_km": 26.04
+ },
+ "24202": {
+  "nom": "Granges-d'Ans",
+  "lat": 45.2134,
+  "lon": 1.1164,
+  "vol_oiseau_km": 16.78,
+  "route_km": 21.52
+ },
+ "19030": {
+  "nom": "Brignac-la-Plaine",
+  "lat": 45.1745,
+  "lon": 1.3234,
+  "vol_oiseau_km": 17.17,
+  "route_km": 23.46
+ },
+ "24473": {
+  "nom": "Sainte-Orse",
+  "lat": 45.2079,
+  "lon": 1.0707,
+  "vol_oiseau_km": 17.41,
+  "route_km": 24.95
+ },
+ "24172": {
+  "nom": "Les Eyzies",
+  "lat": 44.9396,
+  "lon": 1.0352,
+  "vol_oiseau_km": 17.51,
+  "route_km": 22.5,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24321": {
+  "nom": "Pazayac",
+  "lat": 45.1243,
+  "lon": 1.375,
+  "vol_oiseau_km": 17.56,
+  "route_km": 22.32
+ },
+ "24302": {
+  "nom": "Nailhac",
+  "lat": 45.225,
+  "lon": 1.1564,
+  "vol_oiseau_km": 17.62,
+  "route_km": 23.37
+ },
+ "24520": {
+  "nom": "Sarlat-la-Canéda",
+  "lat": 44.906,
+  "lon": 1.1994,
+  "vol_oiseau_km": 18.05,
+  "route_km": 26.2,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "19120": {
+  "nom": "Louignac",
+  "lat": 45.2158,
+  "lon": 1.2695,
+  "vol_oiseau_km": 18.44,
+  "route_km": 25.86
+ },
+ "24021": {
+  "nom": "Badefols-d'Ans",
+  "lat": 45.2306,
+  "lon": 1.2047,
+  "vol_oiseau_km": 18.47,
+  "route_km": 25.03
+ },
+ "24241": {
+  "nom": "Limeyrat",
+  "lat": 45.1659,
+  "lon": 0.9753,
+  "vol_oiseau_km": 18.63,
+  "route_km": 23.28
+ },
+ "24192": {
+  "nom": "Gabillou",
+  "lat": 45.2048,
+  "lon": 1.0315,
+  "vol_oiseau_km": 18.66,
+  "route_km": 22.87
+ },
+ "24179": {
+  "nom": "La Feuillade",
+  "lat": 45.1168,
+  "lon": 1.3956,
+  "vol_oiseau_km": 18.81,
+  "route_km": 24.12
+ },
+ "24301": {
+  "nom": "Nadaillac",
+  "lat": 45.032,
+  "lon": 1.4029,
+  "vol_oiseau_km": 18.95,
+  "route_km": 35.72
+ },
+ "24471": {
+  "nom": "Sainte-Nathalène",
+  "lat": 44.9145,
+  "lon": 1.2782,
+  "vol_oiseau_km": 19.06,
+  "route_km": 27.68
+ },
+ "24546": {
+  "nom": "Temple-Laguyon",
+  "lat": 45.2319,
+  "lon": 1.0978,
+  "vol_oiseau_km": 19.15,
+  "route_km": 25.84
+ },
+ "19191": {
+  "nom": "Saint-Cernin-de-Larche",
+  "lat": 45.0916,
+  "lon": 1.4127,
+  "vol_oiseau_km": 19.51,
+  "route_km": 30.11
+ },
+ "24268": {
+  "nom": "Meyrals",
+  "lat": 44.9057,
+  "lon": 1.0665,
+  "vol_oiseau_km": 19.56,
+  "route_km": 31.61
+ },
+ "24366": {
+  "nom": "Saint-André-d'Allas",
+  "lat": 44.8905,
+  "lon": 1.1496,
+  "vol_oiseau_km": 19.64,
+  "route_km": 31.15
+ },
+ "19124": {
+  "nom": "Mansac",
+  "lat": 45.1584,
+  "lon": 1.3832,
+  "vol_oiseau_km": 19.81,
+  "route_km": 31.9
+ },
+ "19107": {
+  "nom": "Larche",
+  "lat": 45.1135,
+  "lon": 1.4138,
+  "vol_oiseau_km": 20.08,
+  "route_km": 26.51
+ },
+ "24421": {
+  "nom": "Saint-Geyrac",
+  "lat": 45.0688,
+  "lon": 0.9078,
+  "vol_oiseau_km": 20.33,
+  "route_km": 32.79
+ },
+ "24050": {
+  "nom": "Borrèze",
+  "lat": 44.972,
+  "lon": 1.3906,
+  "vol_oiseau_km": 20.51,
+  "route_km": 30.52
+ },
+ "24524": {
+  "nom": "Savignac-de-Miremont",
+  "lat": 44.9659,
+  "lon": 0.9482,
+  "vol_oiseau_km": 20.51,
+  "route_km": 31.45
+ },
+ "19161": {
+  "nom": "Perpezac-le-Blanc",
+  "lat": 45.2147,
+  "lon": 1.3231,
+  "vol_oiseau_km": 20.53,
+  "route_km": 40.79
+ },
+ "24121": {
+  "nom": "Chourgnac",
+  "lat": 45.2336,
+  "lon": 1.0542,
+  "vol_oiseau_km": 20.55,
+  "route_km": 29.13
+ },
+ "24261": {
+  "nom": "Mauzens-et-Miremont",
+  "lat": 44.9901,
+  "lon": 0.9287,
+  "vol_oiseau_km": 20.55,
+  "route_km": 29.71
+ },
+ "24066": {
+  "nom": "Brouchaud",
+  "lat": 45.2048,
+  "lon": 0.9919,
+  "vol_oiseau_km": 20.59,
+  "route_km": 26.11
+ },
+ "24136": {
+  "nom": "Coubjours",
+  "lat": 45.2414,
+  "lon": 1.2548,
+  "vol_oiseau_km": 20.62,
+  "route_km": 30.04
+ },
+ "24516": {
+  "nom": "Salignac-Eyvigues",
+  "lat": 44.947,
+  "lon": 1.3719,
+  "vol_oiseau_km": 20.91,
+  "route_km": 26.37
+ },
+ "19047": {
+  "nom": "Chartrier-Ferrière",
+  "lat": 45.0556,
+  "lon": 1.4343,
+  "vol_oiseau_km": 21.05,
+  "route_km": 38.71
+ },
+ "24284": {
+  "nom": "Montagnac-d'Auberoche",
+  "lat": 45.1875,
+  "lon": 0.9566,
+  "vol_oiseau_km": 21.26,
+  "route_km": 27.22
+ },
+ "24210": {
+  "nom": "Hautefort",
+  "lat": 45.2598,
+  "lon": 1.1368,
+  "vol_oiseau_km": 21.6,
+  "route_km": 29.5
+ },
+ "24535": {
+  "nom": "Simeyrols",
+  "lat": 44.9137,
+  "lon": 1.3367,
+  "vol_oiseau_km": 21.64,
+  "route_km": 30.16
+ },
+ "24512": {
+  "nom": "Saint-Vincent-le-Paluel",
+  "lat": 44.8836,
+  "lon": 1.2706,
+  "vol_oiseau_km": 21.94,
+  "route_km": 32.83
+ },
+ "24545": {
+  "nom": "Teillots",
+  "lat": 45.2611,
+  "lon": 1.215,
+  "vol_oiseau_km": 21.95,
+  "route_km": 32.06
+ },
+ "24390": {
+  "nom": "Saint-Crépin-d'Auberoche",
+  "lat": 45.1188,
+  "lon": 0.8968,
+  "vol_oiseau_km": 21.96,
+  "route_km": 30.04
+ },
+ "24404": {
+  "nom": "Saint-Félix-de-Reillac-et-Mortemart",
+  "lat": 45.0146,
+  "lon": 0.8963,
+  "vol_oiseau_km": 22.02,
+  "route_km": 33.72
+ },
+ "24336": {
+  "nom": "Prats-de-Carlux",
+  "lat": 44.8923,
+  "lon": 1.3093,
+  "vol_oiseau_km": 22.4,
+  "route_km": 32.24
+ },
+ "19229": {
+  "nom": "Saint-Pantaléon-de-Larche",
+  "lat": 45.1461,
+  "lon": 1.4345,
+  "vol_oiseau_km": 22.8,
+  "route_km": 29.63
+ },
+ "19289": {
+  "nom": "Yssandon",
+  "lat": 45.2024,
+  "lon": 1.3849,
+  "vol_oiseau_km": 22.82,
+  "route_km": 41.17
+ },
+ "24396": {
+  "nom": "Saint-Cyprien",
+  "lat": 44.8853,
+  "lon": 1.027,
+  "vol_oiseau_km": 22.97,
+  "route_km": 34.5,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "19077": {
+  "nom": "Estivals",
+  "lat": 45.032,
+  "lon": 1.4567,
+  "vol_oiseau_km": 23.11,
+  "route_km": 42.38
+ },
+ "19239": {
+  "nom": "Saint-Robert",
+  "lat": 45.2543,
+  "lon": 1.2945,
+  "vol_oiseau_km": 23.14,
+  "route_km": 31.91
+ },
+ "24401": {
+  "nom": "Sainte-Eulalie-d'Ans",
+  "lat": 45.2487,
+  "lon": 1.0214,
+  "vol_oiseau_km": 23.22,
+  "route_km": 36.87
+ },
+ "19049": {
+  "nom": "Chasteaux",
+  "lat": 45.0844,
+  "lon": 1.4614,
+  "vol_oiseau_km": 23.22,
+  "route_km": 32.76
+ },
+ "24087": {
+  "nom": "Castels et Bézenac",
+  "lat": 44.8647,
+  "lon": 1.0841,
+  "vol_oiseau_km": 23.38,
+  "route_km": 39.03
+ },
+ "24040": {
+  "nom": "Beynac-et-Cazenac",
+  "lat": 44.8556,
+  "lon": 1.1289,
+  "vol_oiseau_km": 23.66,
+  "route_km": 40.16
+ },
+ "19117": {
+  "nom": "Lissac-sur-Couze",
+  "lat": 45.1116,
+  "lon": 1.4619,
+  "vol_oiseau_km": 23.71,
+  "route_km": 30.72
+ },
+ "24046": {
+  "nom": "Boisseuilh",
+  "lat": 45.2821,
+  "lon": 1.176,
+  "vol_oiseau_km": 23.96,
+  "route_km": 32.37
+ },
+ "24076": {
+  "nom": "Campagne",
+  "lat": 44.8999,
+  "lon": 0.9706,
+  "vol_oiseau_km": 24.12,
+  "route_km": 32.52
+ },
+ "19015": {
+  "nom": "Ayen",
+  "lat": 45.2541,
+  "lon": 1.325,
+  "vol_oiseau_km": 24.25,
+  "route_km": 34.52
+ },
+ "24147": {
+  "nom": "Cubjac-Auvézère-Val d'Ans",
+  "lat": 45.2325,
+  "lon": 0.9623,
+  "vol_oiseau_km": 24.43,
+  "route_km": 32.86
+ },
+ "24156": {
+  "nom": "La Douze",
+  "lat": 45.0707,
+  "lon": 0.8554,
+  "vol_oiseau_km": 24.45,
+  "route_km": 38.42
+ },
+ "24217": {
+  "nom": "Journiac",
+  "lat": 44.9676,
+  "lon": 0.8877,
+  "vol_oiseau_km": 24.54,
+  "route_km": 36.07
+ },
+ "24484": {
+  "nom": "Saint-Pierre-de-Chignac",
+  "lat": 45.1127,
+  "lon": 0.86,
+  "vol_oiseau_km": 24.61,
+  "route_km": 33.09
+ },
+ "24026": {
+  "nom": "Bassillac et Auberoche",
+  "lat": 45.1577,
+  "lon": 0.88,
+  "vol_oiseau_km": 24.67,
+  "route_km": 53.53
+ },
+ "24555": {
+  "nom": "Tourtoirac",
+  "lat": 45.2723,
+  "lon": 1.0481,
+  "vol_oiseau_km": 24.68,
+  "route_km": 33.84
+ },
+ "19253": {
+  "nom": "Segonzac",
+  "lat": 45.2779,
+  "lon": 1.2699,
+  "vol_oiseau_km": 24.84,
+  "route_km": 35.46
+ },
+ "24067": {
+  "nom": "Le Bugue",
+  "lat": 44.9249,
+  "lon": 0.9198,
+  "vol_oiseau_km": 25.01,
+  "route_km": 31.8,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24120": {
+  "nom": "Cherveix-Cubas",
+  "lat": 45.2891,
+  "lon": 1.1163,
+  "vol_oiseau_km": 25.04,
+  "route_km": 29.29
+ },
+ "24587": {
+  "nom": "Vitrac",
+  "lat": 44.8453,
+  "lon": 1.2256,
+  "vol_oiseau_km": 25.05,
+  "route_km": 33.0
+ },
+ "24507": {
+  "nom": "Sainte-Trie",
+  "lat": 45.2908,
+  "lon": 1.2066,
+  "vol_oiseau_km": 25.11,
+  "route_km": 36.41
+ },
+ "24081": {
+  "nom": "Carlux",
+  "lat": 44.8867,
+  "lon": 1.3614,
+  "vol_oiseau_km": 25.2,
+  "route_km": 33.31
+ },
+ "24082": {
+  "nom": "Carsac-Aillac",
+  "lat": 44.8544,
+  "lon": 1.2798,
+  "vol_oiseau_km": 25.23,
+  "route_km": 35.5,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24577": {
+  "nom": "Vézac",
+  "lat": 44.8397,
+  "lon": 1.1764,
+  "vol_oiseau_km": 25.25,
+  "route_km": 36.13
+ },
+ "19278": {
+  "nom": "Varetz",
+  "lat": 45.1914,
+  "lon": 1.4365,
+  "vol_oiseau_km": 25.3,
+  "route_km": 45.18
+ },
+ "24510": {
+  "nom": "Saint-Vincent-de-Cosse",
+  "lat": 44.841,
+  "lon": 1.1129,
+  "vol_oiseau_km": 25.45,
+  "route_km": 40.28
+ },
+ "46118": {
+  "nom": "Gignac",
+  "lat": 44.9863,
+  "lon": 1.4713,
+  "vol_oiseau_km": 25.55,
+  "route_km": 44.24
+ },
+ "19182": {
+  "nom": "Saint-Aulaire",
+  "lat": 45.237,
+  "lon": 1.3889,
+  "vol_oiseau_km": 25.73,
+  "route_km": 39.67
+ },
+ "24220": {
+  "nom": "Lacropte",
+  "lat": 45.0515,
+  "lon": 0.8383,
+  "vol_oiseau_km": 25.85,
+  "route_km": 37.13
+ },
+ "19195": {
+  "nom": "Saint-Cyprien",
+  "lat": 45.2534,
+  "lon": 1.3638,
+  "vol_oiseau_km": 25.88,
+  "route_km": 38.02
+ },
+ "24074": {
+  "nom": "Calviac-en-Périgord",
+  "lat": 44.8612,
+  "lon": 1.3232,
+  "vol_oiseau_km": 25.96,
+  "route_km": 39.11
+ },
+ "24325": {
+  "nom": "Pechs-de-l'Espérance",
+  "lat": 44.9,
+  "lon": 1.4006,
+  "vol_oiseau_km": 26.12,
+  "route_km": 33.86
+ },
+ "19147": {
+  "nom": "Nespouls",
+  "lat": 45.0549,
+  "lon": 1.5026,
+  "vol_oiseau_km": 26.42,
+  "route_km": 56.64
+ },
+ "24015": {
+  "nom": "Audrix",
+  "lat": 44.8841,
+  "lon": 0.9497,
+  "vol_oiseau_km": 26.53,
+  "route_km": 39.83
+ },
+ "19177": {
+  "nom": "Rosiers-de-Juillac",
+  "lat": 45.2889,
+  "lon": 1.3018,
+  "vol_oiseau_km": 26.88,
+  "route_km": 37.13
+ },
+ "19279": {
+  "nom": "Vars-sur-Roseix",
+  "lat": 45.2625,
+  "lon": 1.3741,
+  "vol_oiseau_km": 27.17,
+  "route_km": 41.11
+ },
+ "24493": {
+  "nom": "Saint-Raphaël",
+  "lat": 45.3036,
+  "lon": 1.0712,
+  "vol_oiseau_km": 27.38,
+  "route_km": 34.58
+ },
+ "24006": {
+  "nom": "Allas-les-Mines",
+  "lat": 44.8276,
+  "lon": 1.0748,
+  "vol_oiseau_km": 27.55,
+  "route_km": 47.03
+ },
+ "24355": {
+  "nom": "La Roque-Gageac",
+  "lat": 44.82,
+  "lon": 1.1999,
+  "vol_oiseau_km": 27.56,
+  "route_km": 36.56
+ },
+ "24036": {
+  "nom": "Berbiguières",
+  "lat": 44.8352,
+  "lon": 1.0411,
+  "vol_oiseau_km": 27.57,
+  "route_km": 39.76
+ },
+ "24377": {
+  "nom": "Saint-Avit-de-Vialard",
+  "lat": 44.9458,
+  "lon": 0.8579,
+  "vol_oiseau_km": 27.75,
+  "route_km": 42.29
+ },
+ "19246": {
+  "nom": "Saint-Viance",
+  "lat": 45.2044,
+  "lon": 1.4639,
+  "vol_oiseau_km": 27.89,
+  "route_km": 44.09
+ },
+ "24515": {
+  "nom": "Salagnac",
+  "lat": 45.3156,
+  "lon": 1.2114,
+  "vol_oiseau_km": 27.9,
+  "route_km": 40.15
+ },
+ "24388": {
+  "nom": "Saint-Chamassy",
+  "lat": 44.8784,
+  "lon": 0.932,
+  "vol_oiseau_km": 27.92,
+  "route_km": 40.25
+ },
+ "19151": {
+  "nom": "Noailles",
+  "lat": 45.0989,
+  "lon": 1.5204,
+  "vol_oiseau_km": 28.0,
+  "route_km": 50.51
+ },
+ "24254": {
+  "nom": "Marnac",
+  "lat": 44.8328,
+  "lon": 1.029,
+  "vol_oiseau_km": 28.18,
+  "route_km": 40.6
+ },
+ "24432": {
+  "nom": "Saint-Julien-de-Lampon",
+  "lat": 44.8624,
+  "lon": 1.3806,
+  "vol_oiseau_km": 28.27,
+  "route_km": 38.5
+ },
+ "24513": {
+  "nom": "Saint-Vincent-sur-l'Isle",
+  "lat": 45.2407,
+  "lon": 0.9002,
+  "vol_oiseau_km": 28.48,
+  "route_km": 34.51
+ },
+ "46145": {
+  "nom": "Lachapelle-Auzac",
+  "lat": 44.9382,
+  "lon": 1.4819,
+  "vol_oiseau_km": 28.61,
+  "route_km": 41.4
+ },
+ "19031": {
+  "nom": "Brive-la-Gaillarde",
+  "lat": 45.145,
+  "lon": 1.5144,
+  "vol_oiseau_km": 28.64,
+  "route_km": 36.4,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24142": {
+  "nom": "Coux et Bigaroque-Mouzens",
+  "lat": 44.8501,
+  "lon": 0.9695,
+  "vol_oiseau_km": 28.65,
+  "route_km": 38.77
+ },
+ "24240": {
+  "nom": "Limeuil",
+  "lat": 44.8924,
+  "lon": 0.8967,
+  "vol_oiseau_km": 28.75,
+  "route_km": 39.6
+ },
+ "24009": {
+  "nom": "Anlhiac",
+  "lat": 45.3241,
+  "lon": 1.1194,
+  "vol_oiseau_km": 28.86,
+  "route_km": 34.0
+ },
+ "46309": {
+  "nom": "Souillac",
+  "lat": 44.9144,
+  "lon": 1.465,
+  "vol_oiseau_km": 28.93,
+  "route_km": 39.0,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24162": {
+  "nom": "Escoire",
+  "lat": 45.2067,
+  "lon": 0.8542,
+  "vol_oiseau_km": 29.04,
+  "route_km": 43.16
+ },
+ "19196": {
+  "nom": "Saint-Cyr-la-Roche",
+  "lat": 45.2783,
+  "lon": 1.384,
+  "vol_oiseau_km": 29.05,
+  "route_km": 43.66
+ },
+ "24262": {
+  "nom": "Mayac",
+  "lat": 45.2788,
+  "lon": 0.9503,
+  "vol_oiseau_km": 29.05,
+  "route_km": 40.85
+ },
+ "24470": {
+  "nom": "Sainte-Mondane",
+  "lat": 44.8345,
+  "lon": 1.3406,
+  "vol_oiseau_km": 29.22,
+  "route_km": 40.7
+ },
+ "24152": {
+  "nom": "Domme",
+  "lat": 44.8091,
+  "lon": 1.2424,
+  "vol_oiseau_km": 29.26,
+  "route_km": 38.9,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24196": {
+  "nom": "Génis",
+  "lat": 45.331,
+  "lon": 1.165,
+  "vol_oiseau_km": 29.39,
+  "route_km": 36.2
+ },
+ "24122": {
+  "nom": "Cladech",
+  "lat": 44.8094,
+  "lon": 1.0755,
+  "vol_oiseau_km": 29.5,
+  "route_km": 48.91
+ },
+ "19153": {
+  "nom": "Objat",
+  "lat": 45.266,
+  "lon": 1.4153,
+  "vol_oiseau_km": 29.51,
+  "route_km": 53.02
+ },
+ "19187": {
+  "nom": "Saint-Bonnet-la-Rivière",
+  "lat": 45.2953,
+  "lon": 1.3582,
+  "vol_oiseau_km": 29.52,
+  "route_km": 41.52
+ },
+ "24086": {
+  "nom": "Castelnaud-la-Chapelle",
+  "lat": 44.802,
+  "lon": 1.1292,
+  "vol_oiseau_km": 29.58,
+  "route_km": 41.65
+ },
+ "24476": {
+  "nom": "Saint-Pantaly-d'Excideuil",
+  "lat": 45.3111,
+  "lon": 1.0125,
+  "vol_oiseau_km": 29.74,
+  "route_km": 45.46
+ },
+ "24574": {
+  "nom": "Veyrignac",
+  "lat": 44.8238,
+  "lon": 1.3261,
+  "vol_oiseau_km": 29.78,
+  "route_km": 41.98
+ },
+ "24137": {
+  "nom": "Coulaures",
+  "lat": 45.2989,
+  "lon": 0.9743,
+  "vol_oiseau_km": 29.9,
+  "route_km": 43.62
+ },
+ "24448": {
+  "nom": "Saint-Martial-d'Albarède",
+  "lat": 45.3203,
+  "lon": 1.0387,
+  "vol_oiseau_km": 29.93,
+  "route_km": 42.93
+ },
+ "24575": {
+  "nom": "Veyrines-de-Domme",
+  "lat": 44.8007,
+  "lon": 1.1035,
+  "vol_oiseau_km": 29.99,
+  "route_km": 46.59
+ },
+ "24207": {
+  "nom": "Groléjac",
+  "lat": 44.8111,
+  "lon": 1.2947,
+  "vol_oiseau_km": 30.15,
+  "route_km": 38.93
+ },
+ "19274": {
+  "nom": "Ussac",
+  "lat": 45.1875,
+  "lon": 1.5119,
+  "vol_oiseau_km": 30.23,
+  "route_km": 46.46
+ },
+ "19094": {
+  "nom": "Juillac",
+  "lat": 45.3253,
+  "lon": 1.2897,
+  "vol_oiseau_km": 30.33,
+  "route_km": 43.06
+ },
+ "19093": {
+  "nom": "Jugeals-Nazareth",
+  "lat": 45.09,
+  "lon": 1.5517,
+  "vol_oiseau_km": 30.34,
+  "route_km": 54.78
+ },
+ "24164": {
+  "nom": "Excideuil",
+  "lat": 45.3296,
+  "lon": 1.0602,
+  "vol_oiseau_km": 30.4,
+  "route_km": 39.9,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "46083": {
+  "nom": "Cressensac-Sarrazac",
+  "lat": 45.0175,
+  "lon": 1.5499,
+  "vol_oiseau_km": 30.6,
+  "route_km": 62.6
+ },
+ "19035": {
+  "nom": "Chabrignac",
+  "lat": 45.3124,
+  "lon": 1.3427,
+  "vol_oiseau_km": 30.6,
+  "route_km": 41.48
+ },
+ "24318": {
+  "nom": "Paunat",
+  "lat": 44.9029,
+  "lon": 0.8532,
+  "vol_oiseau_km": 30.65,
+  "route_km": 44.12
+ },
+ "24521": {
+  "nom": "Sarliac-sur-l'Isle",
+  "lat": 45.2374,
+  "lon": 0.8582,
+  "vol_oiseau_km": 30.75,
+  "route_km": 40.31
+ },
+ "24416": {
+  "nom": "Saint-Germain-de-Belvès",
+  "lat": 44.8064,
+  "lon": 1.0344,
+  "vol_oiseau_km": 30.76,
+  "route_km": 48.06
+ },
+ "24053": {
+  "nom": "Boulazac Isle Manoire",
+  "lat": 45.1385,
+  "lon": 0.7878,
+  "vol_oiseau_km": 30.79,
+  "route_km": 48.91
+ },
+ "46086": {
+  "nom": "Cuzance",
+  "lat": 44.9584,
+  "lon": 1.5273,
+  "vol_oiseau_km": 30.8,
+  "route_km": 47.11
+ },
+ "46239": {
+  "nom": "Le Roc",
+  "lat": 44.865,
+  "lon": 1.4367,
+  "vol_oiseau_km": 30.89,
+  "route_km": 43.42
+ },
+ "24091": {
+  "nom": "Cénac-et-Saint-Julien",
+  "lat": 44.7904,
+  "lon": 1.2121,
+  "vol_oiseau_km": 30.93,
+  "route_km": 39.7,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "24339": {
+  "nom": "Preyssac-d'Excideuil",
+  "lat": 45.3422,
+  "lon": 1.106,
+  "vol_oiseau_km": 31.0,
+  "route_km": 36.25
+ },
+ "24527": {
+  "nom": "Savignac-les-Églises",
+  "lat": 45.2818,
+  "lon": 0.9131,
+  "vol_oiseau_km": 31.1,
+  "route_km": 38.1
+ },
+ "46186": {
+  "nom": "Masclat",
+  "lat": 44.8313,
+  "lon": 1.3822,
+  "vol_oiseau_km": 31.19,
+  "route_km": 41.08
+ },
+ "24538": {
+  "nom": "Siorac-en-Périgord",
+  "lat": 44.8214,
+  "lon": 0.9726,
+  "vol_oiseau_km": 31.26,
+  "route_km": 44.56
+ },
+ "24518": {
+  "nom": "Salon",
+  "lat": 45.0321,
+  "lon": 0.7716,
+  "vol_oiseau_km": 31.28,
+  "route_km": 41.84
+ },
+ "19005": {
+  "nom": "Allassac",
+  "lat": 45.2573,
+  "lon": 1.4609,
+  "vol_oiseau_km": 31.32,
+  "route_km": 51.02
+ },
+ "19273": {
+  "nom": "Turenne",
+  "lat": 45.0695,
+  "lon": 1.567,
+  "vol_oiseau_km": 31.44,
+  "route_km": 56.6
+ },
+ "24463": {
+  "nom": "Saint-Médard-d'Excideuil",
+  "lat": 45.3441,
+  "lon": 1.0858,
+  "vol_oiseau_km": 31.49,
+  "route_km": 39.34
+ },
+ "24395": {
+  "nom": "Saint-Cybranet",
+  "lat": 44.7835,
+  "lon": 1.1595,
+  "vol_oiseau_km": 31.5,
+  "route_km": 43.12
+ },
+ "46209": {
+  "nom": "Nadaillac-de-Rouge",
+  "lat": 44.851,
+  "lon": 1.4326,
+  "vol_oiseau_km": 31.83,
+  "route_km": 46.19
+ },
+ "24464": {
+  "nom": "Saint-Mesmin",
+  "lat": 45.3501,
+  "lon": 1.2331,
+  "vol_oiseau_km": 31.94,
+  "route_km": 44.92
+ },
+ "24011": {
+  "nom": "Antonne-et-Trigonant",
+  "lat": 45.2275,
+  "lon": 0.8289,
+  "vol_oiseau_km": 31.96,
+  "route_km": 41.43
+ },
+ "24576": {
+  "nom": "Veyrines-de-Vergt",
+  "lat": 44.9897,
+  "lon": 0.7734,
+  "vol_oiseau_km": 32.07,
+  "route_km": 44.74
+ },
+ "46153": {
+  "nom": "Lanzac",
+  "lat": 44.8693,
+  "lon": 1.4681,
+  "vol_oiseau_km": 32.31,
+  "route_km": 43.68
+ },
+ "19242": {
+  "nom": "Saint-Solve",
+  "lat": 45.3074,
+  "lon": 1.4014,
+  "vol_oiseau_km": 32.48,
+  "route_km": 48.29
+ },
+ "24005": {
+  "nom": "Alles-sur-Dordogne",
+  "lat": 44.8618,
+  "lon": 0.8724,
+  "vol_oiseau_km": 32.48,
+  "route_km": 45.09
+ },
+ "24362": {
+  "nom": "Val de Louyre et Caudeau",
+  "lat": 44.9731,
+  "lon": 0.7733,
+  "vol_oiseau_km": 32.63,
+  "route_km": 47.55
+ },
+ "24084": {
+  "nom": "Carves",
+  "lat": 44.783,
+  "lon": 1.0609,
+  "vol_oiseau_km": 32.63,
+  "route_km": 52.62
+ },
+ "24360": {
+  "nom": "Sagelat",
+  "lat": 44.7882,
+  "lon": 1.0233,
+  "vol_oiseau_km": 32.96,
+  "route_km": 48.72
+ },
+ "19288": {
+  "nom": "Voutezac",
+  "lat": 45.291,
+  "lon": 1.4428,
+  "vol_oiseau_km": 33.02,
+  "route_km": 58.75
+ },
+ "46194": {
+  "nom": "Milhac",
+  "lat": 44.7973,
+  "lon": 1.3472,
+  "vol_oiseau_km": 33.15,
+  "route_km": 44.7
+ },
+ "46257": {
+  "nom": "Saint-Cirq-Madelon",
+  "lat": 44.7884,
+  "lon": 1.3181,
+  "vol_oiseau_km": 33.16,
+  "route_km": 43.0
+ },
+ "24327": {
+  "nom": "Pezuls",
+  "lat": 44.9118,
+  "lon": 0.8052,
+  "vol_oiseau_km": 33.24,
+  "route_km": 47.42
+ },
+ "46098": {
+  "nom": "Fajoles",
+  "lat": 44.8087,
+  "lon": 1.3827,
+  "vol_oiseau_km": 33.35,
+  "route_km": 44.32
+ },
+ "19063": {
+  "nom": "Cosnac",
+  "lat": 45.1301,
+  "lon": 1.5837,
+  "vol_oiseau_km": 33.48,
+  "route_km": 53.49
+ },
+ "46152": {
+  "nom": "Lamothe-Fénelon",
+  "lat": 44.8297,
+  "lon": 1.4293,
+  "vol_oiseau_km": 33.49,
+  "route_km": 45.69
+ },
+ "19072": {
+  "nom": "Donzenac",
+  "lat": 45.2318,
+  "lon": 1.5245,
+  "vol_oiseau_km": 33.53,
+  "route_km": 49.24
+ },
+ "24312": {
+  "nom": "Sanilhac",
+  "lat": 45.1079,
+  "lon": 0.7435,
+  "vol_oiseau_km": 33.54,
+  "route_km": 59.94
+ },
+ "24417": {
+  "nom": "Saint-Germain-des-Prés",
+  "lat": 45.3454,
+  "lon": 1.0004,
+  "vol_oiseau_km": 33.62,
+  "route_km": 45.15
+ },
+ "24293": {
+  "nom": "Monplaisant",
+  "lat": 44.7896,
+  "lon": 0.9932,
+  "vol_oiseau_km": 33.7,
+  "route_km": 47.98
+ },
+ "24558": {
+  "nom": "Trémolat",
+  "lat": 44.8751,
+  "lon": 0.8295,
+  "vol_oiseau_km": 34.02,
+  "route_km": 49.28
+ },
+ "24124": {
+  "nom": "Clermont-d'Excideuil",
+  "lat": 45.3631,
+  "lon": 1.0475,
+  "vol_oiseau_km": 34.26,
+  "route_km": 43.44
+ },
+ "19286": {
+  "nom": "Vignols",
+  "lat": 45.3252,
+  "lon": 1.4047,
+  "vol_oiseau_km": 34.26,
+  "route_km": 48.92
+ },
+ "24160": {
+  "nom": "Église-Neuve-de-Vergt",
+  "lat": 45.0945,
+  "lon": 0.732,
+  "vol_oiseau_km": 34.27,
+  "route_km": 60.65
+ },
+ "19109": {
+  "nom": "Lascaux",
+  "lat": 45.3389,
+  "lon": 1.3734,
+  "vol_oiseau_km": 34.33,
+  "route_km": 49.1
+ },
+ "46016": {
+  "nom": "Baladou",
+  "lat": 44.925,
+  "lon": 1.5573,
+  "vol_oiseau_km": 34.52,
+  "route_km": 48.02
+ },
+ "24206": {
+  "nom": "Grives",
+  "lat": 44.7632,
+  "lon": 1.0745,
+  "vol_oiseau_km": 34.52,
+  "route_km": 54.36
+ },
+ "24560": {
+  "nom": "Urval",
+  "lat": 44.8011,
+  "lon": 0.9365,
+  "vol_oiseau_km": 34.65,
+  "route_km": 49.66
+ },
+ "24300": {
+  "nom": "Nabirat",
+  "lat": 44.7667,
+  "lon": 1.291,
+  "vol_oiseau_km": 34.76,
+  "route_km": 44.29
+ },
+ "24557": {
+  "nom": "Trélissac",
+  "lat": 45.2114,
+  "lon": 0.7738,
+  "vol_oiseau_km": 34.76,
+  "route_km": 56.43
+ },
+ "24227": {
+  "nom": "Lanouaille",
+  "lat": 45.3789,
+  "lon": 1.1318,
+  "vol_oiseau_km": 34.82,
+  "route_km": 41.17
+ },
+ "24526": {
+  "nom": "Savignac-Lédrier",
+  "lat": 45.3795,
+  "lon": 1.1954,
+  "vol_oiseau_km": 34.85,
+  "route_km": 44.88
+ },
+ "24429": {
+  "nom": "Saint-Jory-las-Bloux",
+  "lat": 45.3395,
+  "lon": 0.947,
+  "vol_oiseau_km": 34.88,
+  "route_km": 50.63
+ },
+ "24468": {
+  "nom": "Saint-Michel-de-Villadeix",
+  "lat": 44.9943,
+  "lon": 0.7335,
+  "vol_oiseau_km": 34.98,
+  "route_km": 48.41
+ },
+ "24397": {
+  "nom": "Saint-Cyr-les-Champagnes",
+  "lat": 45.3699,
+  "lon": 1.2926,
+  "vol_oiseau_km": 35.13,
+  "route_km": 47.66
+ },
+ "46337": {
+  "nom": "Mayrac",
+  "lat": 44.9002,
+  "lon": 1.5464,
+  "vol_oiseau_km": 35.14,
+  "route_km": 46.68
+ },
+ "46241": {
+  "nom": "Rouffilhac",
+  "lat": 44.7995,
+  "lon": 1.4066,
+  "vol_oiseau_km": 35.2,
+  "route_km": 47.14
+ },
+ "24407": {
+  "nom": "Sainte-Foy-de-Longas",
+  "lat": 44.9324,
+  "lon": 0.7606,
+  "vol_oiseau_km": 35.25,
+  "route_km": 49.12
+ },
+ "19059": {
+  "nom": "Concèze",
+  "lat": 45.3614,
+  "lon": 1.3341,
+  "vol_oiseau_km": 35.3,
+  "route_km": 47.83
+ },
+ "24540": {
+  "nom": "Sorges et Ligueux en Périgord",
+  "lat": 45.2929,
+  "lon": 0.8505,
+  "vol_oiseau_km": 35.31,
+  "route_km": 47.57
+ },
+ "24438": {
+  "nom": "Saint-Laurent-la-Vallée",
+  "lat": 44.7505,
+  "lon": 1.1227,
+  "vol_oiseau_km": 35.33,
+  "route_km": 50.55
+ },
+ "19115": {
+  "nom": "Ligneyrac",
+  "lat": 45.0487,
+  "lon": 1.6185,
+  "vol_oiseau_km": 35.54,
+  "route_km": 64.81
+ },
+ "24068": {
+  "nom": "Le Buisson-de-Cadouin",
+  "lat": 44.8144,
+  "lon": 0.8885,
+  "vol_oiseau_km": 35.59,
+  "route_km": 49.65
+ },
+ "24571": {
+  "nom": "Vergt",
+  "lat": 45.0448,
+  "lon": 0.7142,
+  "vol_oiseau_km": 35.63,
+  "route_km": 47.56
+ },
+ "19150": {
+  "nom": "Noailhac",
+  "lat": 45.0792,
+  "lon": 1.6215,
+  "vol_oiseau_km": 35.74,
+  "route_km": 63.27
+ },
+ "19123": {
+  "nom": "Malemort",
+  "lat": 45.1797,
+  "lon": 1.5936,
+  "vol_oiseau_km": 35.77,
+  "route_km": 52.23
+ },
+ "24150": {
+  "nom": "Daglan",
+  "lat": 44.7453,
+  "lon": 1.1896,
+  "vol_oiseau_km": 35.78,
+  "route_km": 47.27
+ },
+ "46232": {
+  "nom": "Le Vignon-en-Quercy",
+  "lat": 44.988,
+  "lon": 1.6083,
+  "vol_oiseau_km": 35.79,
+  "route_km": 70.88
+ },
+ "24450": {
+  "nom": "Saint-Martial-de-Nabirat",
+  "lat": 44.7494,
+  "lon": 1.2466,
+  "vol_oiseau_km": 35.84,
+  "route_km": 45.75
+ },
+ "24073": {
+  "nom": "Calès",
+  "lat": 44.86,
+  "lon": 0.8156,
+  "vol_oiseau_km": 35.93,
+  "route_km": 52.82
+ },
+ "46178": {
+  "nom": "Loupiac",
+  "lat": 44.8259,
+  "lon": 1.4715,
+  "vol_oiseau_km": 35.95,
+  "route_km": 51.37
+ },
+ "24135": {
+  "nom": "Cornille",
+  "lat": 45.2443,
+  "lon": 0.7818,
+  "vol_oiseau_km": 36.07,
+  "route_km": 60.71
+ },
+ "46293": {
+  "nom": "Saint-Sozy",
+  "lat": 44.8809,
+  "lon": 1.5473,
+  "vol_oiseau_km": 36.38,
+  "route_km": 46.77
+ },
+ "46220": {
+  "nom": "Pinsac",
+  "lat": 44.859,
+  "lon": 1.5246,
+  "vol_oiseau_km": 36.42,
+  "route_km": 46.4
+ },
+ "46216": {
+  "nom": "Payrignac",
+  "lat": 44.7612,
+  "lon": 1.3423,
+  "vol_oiseau_km": 36.68,
+  "route_km": 47.35
+ },
+ "24158": {
+  "nom": "Dussac",
+  "lat": 45.3905,
+  "lon": 1.0727,
+  "vol_oiseau_km": 36.75,
+  "route_km": 48.44
+ },
+ "46006": {
+  "nom": "Anglars-Nozac",
+  "lat": 44.7823,
+  "lon": 1.405,
+  "vol_oiseau_km": 36.77,
+  "route_km": 48.77
+ },
+ "24478": {
+  "nom": "Saint-Pardoux-et-Vielvic",
+  "lat": 44.7686,
+  "lon": 0.9637,
+  "vol_oiseau_km": 36.8,
+  "route_km": 53.67
+ },
+ "24260": {
+  "nom": "Mauzac-et-Grand-Castang",
+  "lat": 44.8782,
+  "lon": 0.7755,
+  "vol_oiseau_km": 37.23,
+  "route_km": 53.57
+ },
+ "19043": {
+  "nom": "La Chapelle-aux-Brocs",
+  "lat": 45.1427,
+  "lon": 1.6289,
+  "vol_oiseau_km": 37.25,
+  "route_km": 58.29
+ },
+ "46185": {
+  "nom": "Martel",
+  "lat": 44.9359,
+  "lon": 1.6047,
+  "vol_oiseau_km": 37.38,
+  "route_km": 52.38
+ },
+ "19179": {
+  "nom": "Saillac",
+  "lat": 45.041,
+  "lon": 1.6413,
+  "vol_oiseau_km": 37.39,
+  "route_km": 67.78
+ },
+ "24035": {
+  "nom": "Pays de Belvès",
+  "lat": 44.7492,
+  "lon": 1.005,
+  "vol_oiseau_km": 37.53,
+  "route_km": 53.17
+ },
+ "46065": {
+  "nom": "Cavagnac",
+  "lat": 45.0145,
+  "lon": 1.6399,
+  "vol_oiseau_km": 37.63,
+  "route_km": 68.92
+ },
+ "19243": {
+  "nom": "Saint-Sornin-Lavolps",
+  "lat": 45.3737,
+  "lon": 1.3702,
+  "vol_oiseau_km": 37.67,
+  "route_km": 53.42
+ },
+ "19105": {
+  "nom": "Lanteuil",
+  "lat": 45.1182,
+  "lon": 1.643,
+  "vol_oiseau_km": 37.83,
+  "route_km": 64.42
+ },
+ "19178": {
+  "nom": "Sadroc",
+  "lat": 45.2748,
+  "lon": 1.5495,
+  "vol_oiseau_km": 37.89,
+  "route_km": 54.82
+ },
+ "24308": {
+  "nom": "Négrondes",
+  "lat": 45.3396,
+  "lon": 0.8769,
+  "vol_oiseau_km": 37.9,
+  "route_km": 48.16
+ },
+ "19202": {
+  "nom": "Sainte-Féréole",
+  "lat": 45.2288,
+  "lon": 1.5934,
+  "vol_oiseau_km": 38.01,
+  "route_km": 55.94
+ },
+ "24094": {
+  "nom": "Chalagnac",
+  "lat": 45.092,
+  "lon": 0.682,
+  "vol_oiseau_km": 38.16,
+  "route_km": 61.42
+ },
+ "24505": {
+  "nom": "Saint-Sulpice-d'Excideuil",
+  "lat": 45.3945,
+  "lon": 1.0208,
+  "vol_oiseau_km": 38.2,
+  "route_km": 52.99
+ },
+ "19068": {
+  "nom": "Dampniat",
+  "lat": 45.1584,
+  "lon": 1.6362,
+  "vol_oiseau_km": 38.23,
+  "route_km": 58.62
+ },
+ "19154": {
+  "nom": "Orgnac-sur-Vézère",
+  "lat": 45.3406,
+  "lon": 1.4616,
+  "vol_oiseau_km": 38.23,
+  "route_km": 65.53
+ },
+ "24134": {
+  "nom": "Corgnac-sur-l'Isle",
+  "lat": 45.3737,
+  "lon": 0.9468,
+  "vol_oiseau_km": 38.24,
+  "route_km": 52.35
+ },
+ "19078": {
+  "nom": "Estivaux",
+  "lat": 45.3211,
+  "lon": 1.4953,
+  "vol_oiseau_km": 38.25,
+  "route_km": 62.95
+ },
+ "19057": {
+  "nom": "Collonges-la-Rouge",
+  "lat": 45.0613,
+  "lon": 1.6539,
+  "vol_oiseau_km": 38.27,
+  "route_km": 65.89
+ },
+ "24365": {
+  "nom": "Saint-Amand-de-Vergt",
+  "lat": 44.989,
+  "lon": 0.6921,
+  "vol_oiseau_km": 38.29,
+  "route_km": 51.27
+ },
+ "19188": {
+  "nom": "Saint-Bonnet-l'Enfantier",
+  "lat": 45.299,
+  "lon": 1.5278,
+  "vol_oiseau_km": 38.32,
+  "route_km": 60.24
+ },
+ "24375": {
+  "nom": "Saint-Aubin-de-Nabirat",
+  "lat": 44.7312,
+  "lon": 1.2825,
+  "vol_oiseau_km": 38.4,
+  "route_km": 48.67
+ },
+ "24022": {
+  "nom": "Badefols-sur-Dordogne",
+  "lat": 44.8393,
+  "lon": 0.7991,
+  "vol_oiseau_km": 38.42,
+  "route_km": 55.78
+ },
+ "46312": {
+  "nom": "Strenquels",
+  "lat": 44.9733,
+  "lon": 1.6377,
+  "vol_oiseau_km": 38.45,
+  "route_km": 71.59
+ },
+ "24322": {
+  "nom": "Périgueux",
+  "lat": 45.1939,
+  "lon": 0.7105,
+  "vol_oiseau_km": 38.48,
+  "route_km": 45.6,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "46084": {
+  "nom": "Creysse",
+  "lat": 44.8989,
+  "lon": 1.5948,
+  "vol_oiseau_km": 38.49,
+  "route_km": 52.98
+ },
+ "46215": {
+  "nom": "Payrac",
+  "lat": 44.792,
+  "lon": 1.4648,
+  "vol_oiseau_km": 38.52,
+  "route_km": 51.56
+ },
+ "24052": {
+  "nom": "Bouillac",
+  "lat": 44.7664,
+  "lon": 0.921,
+  "vol_oiseau_km": 38.59,
+  "route_km": 59.96
+ },
+ "24063": {
+  "nom": "Bouzic",
+  "lat": 44.7221,
+  "lon": 1.2255,
+  "vol_oiseau_km": 38.6,
+  "route_km": 53.13
+ },
+ "24230": {
+  "nom": "Larzac",
+  "lat": 44.7392,
+  "lon": 0.9993,
+  "vol_oiseau_km": 38.73,
+  "route_km": 53.73
+ },
+ "24098": {
+  "nom": "Champcevinel",
+  "lat": 45.2198,
+  "lon": 0.7227,
+  "vol_oiseau_km": 38.76,
+  "route_km": 60.13
+ },
+ "24273": {
+  "nom": "Molières",
+  "lat": 44.816,
+  "lon": 0.824,
+  "vol_oiseau_km": 38.79,
+  "route_km": 56.59
+ },
+ "19025": {
+  "nom": "Beyssenac",
+  "lat": 45.4032,
+  "lon": 1.3016,
+  "vol_oiseau_km": 38.88,
+  "route_km": 55.66
+ },
+ "24146": {
+  "nom": "Creyssensac-et-Pissot",
+  "lat": 45.0718,
+  "lon": 0.6688,
+  "vol_oiseau_km": 39.1,
+  "route_km": 64.85
+ },
+ "24406": {
+  "nom": "Sainte-Foy-de-Belvès",
+  "lat": 44.7271,
+  "lon": 1.0374,
+  "vol_oiseau_km": 39.11,
+  "route_km": 55.46
+ },
+ "19024": {
+  "nom": "Beyssac",
+  "lat": 45.3693,
+  "lon": 1.4224,
+  "vol_oiseau_km": 39.16,
+  "route_km": 56.35
+ },
+ "24151": {
+  "nom": "Doissat",
+  "lat": 44.7196,
+  "lon": 1.0794,
+  "vol_oiseau_km": 39.2,
+  "route_km": 58.04
+ },
+ "24488": {
+  "nom": "Saint-Pompon",
+  "lat": 44.7126,
+  "lon": 1.1388,
+  "vol_oiseau_km": 39.44,
+  "route_km": 53.95
+ },
+ "24138": {
+  "nom": "Coulounieix-Chamiers",
+  "lat": 45.1712,
+  "lon": 0.6861,
+  "vol_oiseau_km": 39.46,
+  "route_km": 59.89
+ },
+ "46144": {
+  "nom": "Lacave",
+  "lat": 44.8417,
+  "lon": 1.5549,
+  "vol_oiseau_km": 39.49,
+  "route_km": 50.72
+ },
+ "24338": {
+  "nom": "Pressignac-Vicq",
+  "lat": 44.8954,
+  "lon": 0.7264,
+  "vol_oiseau_km": 39.52,
+  "route_km": 56.23
+ },
+ "24320": {
+  "nom": "Payzac",
+  "lat": 45.42,
+  "lon": 1.229,
+  "vol_oiseau_km": 39.59,
+  "route_km": 51.19
+ },
+ "46127": {
+  "nom": "Gourdon",
+  "lat": 44.7382,
+  "lon": 1.3714,
+  "vol_oiseau_km": 39.93,
+  "route_km": 50.6
+ },
+ "19050": {
+  "nom": "Chauffour-sur-Vell",
+  "lat": 45.0202,
+  "lon": 1.6715,
+  "vol_oiseau_km": 40.0,
+  "route_km": 71.7
+ },
+ "24190": {
+  "nom": "Fouleix",
+  "lat": 44.9762,
+  "lon": 0.6738,
+  "vol_oiseau_km": 40.03,
+  "route_km": 53.83
+ },
+ "46192": {
+  "nom": "Meyronne",
+  "lat": 44.8668,
+  "lon": 1.5901,
+  "vol_oiseau_km": 40.05,
+  "route_km": 51.34
+ },
+ "46169": {
+  "nom": "Léobard",
+  "lat": 44.7197,
+  "lon": 1.3101,
+  "vol_oiseau_km": 40.2,
+  "route_km": 55.51
+ },
+ "24184": {
+  "nom": "Florimont-Gaumier",
+  "lat": 44.7084,
+  "lon": 1.241,
+  "vol_oiseau_km": 40.27,
+  "route_km": 52.38
+ },
+ "46074": {
+  "nom": "Condat",
+  "lat": 44.9915,
+  "lon": 1.6682,
+  "vol_oiseau_km": 40.29,
+  "route_km": 70.31
+ },
+ "24313": {
+  "nom": "Orliac",
+  "lat": 44.7121,
+  "lon": 1.0613,
+  "vol_oiseau_km": 40.29,
+  "route_km": 59.02
+ },
+ "24445": {
+  "nom": "Saint-Marcel-du-Périgord",
+  "lat": 44.9203,
+  "lon": 0.6979,
+  "vol_oiseau_km": 40.3,
+  "route_km": 53.77
+ },
+ "24408": {
+  "nom": "Saint-Front-d'Alemps",
+  "lat": 45.3203,
+  "lon": 0.7986,
+  "vol_oiseau_km": 40.34,
+  "route_km": 51.69
+ },
+ "24223": {
+  "nom": "Lalinde",
+  "lat": 44.858,
+  "lon": 0.7442,
+  "vol_oiseau_km": 40.54,
+  "route_km": 58.42
+ },
+ "19211": {
+  "nom": "Saint-Hilaire-Peyroux",
+  "lat": 45.2109,
+  "lon": 1.6423,
+  "vol_oiseau_km": 40.6,
+  "route_km": 59.61
+ },
+ "24008": {
+  "nom": "Angoisse",
+  "lat": 45.4323,
+  "lon": 1.1528,
+  "vol_oiseau_km": 40.67,
+  "route_km": 47.92
+ },
+ "24002": {
+  "nom": "Agonac",
+  "lat": 45.2785,
+  "lon": 0.7415,
+  "vol_oiseau_km": 40.81,
+  "route_km": 67.65
+ },
+ "24305": {
+  "nom": "Nanthiat",
+  "lat": 45.4101,
+  "lon": 0.9822,
+  "vol_oiseau_km": 40.83,
+  "route_km": 51.84
+ },
+ "19138": {
+  "nom": "Meyssac",
+  "lat": 45.0484,
+  "lon": 1.6867,
+  "vol_oiseau_km": 40.9,
+  "route_km": 69.91
+ },
+ "24208": {
+  "nom": "Grun-Bordas",
+  "lat": 45.0461,
+  "lon": 0.6468,
+  "vol_oiseau_km": 40.9,
+  "route_km": 68.43
+ },
+ "46265": {
+  "nom": "Saint-Denis-lès-Martel",
+  "lat": 44.9429,
+  "lon": 1.6567,
+  "vol_oiseau_km": 40.91,
+  "route_km": 57.07
+ },
+ "24334": {
+  "nom": "Pontours",
+  "lat": 44.8264,
+  "lon": 0.7724,
+  "vol_oiseau_km": 40.95,
+  "route_km": 58.0
+ },
+ "24075": {
+  "nom": "Campagnac-lès-Quercy",
+  "lat": 44.6979,
+  "lon": 1.1809,
+  "vol_oiseau_km": 41.02,
+  "route_km": 54.42
+ },
+ "24459": {
+  "nom": "Saint-Mayme-de-Péreyrol",
+  "lat": 45.0191,
+  "lon": 0.6481,
+  "vol_oiseau_km": 41.09,
+  "route_km": 75.22
+ },
+ "24517": {
+  "nom": "Salles-de-Belvès",
+  "lat": 44.7159,
+  "lon": 1.0014,
+  "vol_oiseau_km": 41.12,
+  "route_km": 56.03
+ },
+ "19003": {
+  "nom": "Albignac",
+  "lat": 45.1471,
+  "lon": 1.6795,
+  "vol_oiseau_km": 41.23,
+  "route_km": 65.38
+ },
+ "24171": {
+  "nom": "Eyzerac",
+  "lat": 45.3885,
+  "lon": 0.9026,
+  "vol_oiseau_km": 41.33,
+  "route_km": 53.6
+ },
+ "24567": {
+  "nom": "Vaunac",
+  "lat": 45.3731,
+  "lon": 0.8671,
+  "vol_oiseau_km": 41.37,
+  "route_km": 51.31
+ },
+ "19011": {
+  "nom": "Arnac-Pompadour",
+  "lat": 45.4118,
+  "lon": 1.366,
+  "vol_oiseau_km": 41.42,
+  "route_km": 56.03
+ },
+ "19099": {
+  "nom": "Lagleygeolle",
+  "lat": 45.0855,
+  "lon": 1.6938,
+  "vol_oiseau_km": 41.44,
+  "route_km": 71.99
+ },
+ "24405": {
+  "nom": "Saint-Félix-de-Villadeix",
+  "lat": 44.9316,
+  "lon": 0.6753,
+  "vol_oiseau_km": 41.46,
+  "route_km": 56.34
+ },
+ "19234": {
+  "nom": "Saint-Pardoux-l'Ortigier",
+  "lat": 45.2984,
+  "lon": 1.5811,
+  "vol_oiseau_km": 41.46,
+  "route_km": 58.51
+ },
+ "24378": {
+  "nom": "Saint-Avit-Rivière",
+  "lat": 44.7413,
+  "lon": 0.9093,
+  "vol_oiseau_km": 41.47,
+  "route_km": 60.96
+ },
+ "24290": {
+  "nom": "Montferrand-du-Périgord",
+  "lat": 44.7563,
+  "lon": 0.8738,
+  "vol_oiseau_km": 41.51,
+  "route_km": 62.36
+ },
+ "19254": {
+  "nom": "Ségur-le-Château",
+  "lat": 45.428,
+  "lon": 1.3015,
+  "vol_oiseau_km": 41.54,
+  "route_km": 58.03
+ },
+ "24139": {
+  "nom": "Coursac",
+  "lat": 45.131,
+  "lon": 0.645,
+  "vol_oiseau_km": 41.57,
+  "route_km": 60.27
+ },
+ "46236": {
+  "nom": "Reilhaguet",
+  "lat": 44.7823,
+  "lon": 1.51,
+  "vol_oiseau_km": 41.6,
+  "route_km": 56.71
+ },
+ "24238": {
+  "nom": "Lempzours",
+  "lat": 45.3556,
+  "lon": 0.8279,
+  "vol_oiseau_km": 41.67,
+  "route_km": 51.9
+ },
+ "46283": {
+  "nom": "Saint-Michel-de-Bannières",
+  "lat": 44.9752,
+  "lon": 1.6826,
+  "vol_oiseau_km": 41.81,
+  "route_km": 72.91
+ },
+ "24480": {
+  "nom": "Saint-Paul-de-Serre",
+  "lat": 45.0794,
+  "lon": 0.6332,
+  "vol_oiseau_km": 41.92,
+  "route_km": 66.47
+ },
+ "19207": {
+  "nom": "Saint-Germain-les-Vergnes",
+  "lat": 45.2685,
+  "lon": 1.6185,
+  "vol_oiseau_km": 41.93,
+  "route_km": 67.08
+ },
+ "24519": {
+  "nom": "Sarlande",
+  "lat": 45.4441,
+  "lon": 1.1234,
+  "vol_oiseau_km": 42.1,
+  "route_km": 50.1
+ },
+ "24060": {
+  "nom": "Bourniquel",
+  "lat": 44.8102,
+  "lon": 0.7704,
+  "vol_oiseau_km": 42.27,
+  "route_km": 60.92
+ },
+ "46047": {
+  "nom": "Calès",
+  "lat": 44.7968,
+  "lon": 1.5494,
+  "vol_oiseau_km": 42.52,
+  "route_km": 54.02
+ },
+ "46208": {
+  "nom": "Montvalent",
+  "lat": 44.8747,
+  "lon": 1.6344,
+  "vol_oiseau_km": 42.54,
+  "route_km": 55.76
+ },
+ "19162": {
+  "nom": "Perpezac-le-Noir",
+  "lat": 45.337,
+  "lon": 1.5518,
+  "vol_oiseau_km": 42.59,
+  "route_km": 63.63
+ },
+ "24446": {
+  "nom": "Saint-Marcory",
+  "lat": 44.7225,
+  "lon": 0.9289,
+  "vol_oiseau_km": 42.61,
+  "route_km": 60.2
+ },
+ "19270": {
+  "nom": "Troche",
+  "lat": 45.3954,
+  "lon": 1.4471,
+  "vol_oiseau_km": 42.64,
+  "route_km": 59.78
+ },
+ "24379": {
+  "nom": "Saint-Avit-Sénieur",
+  "lat": 44.7728,
+  "lon": 0.8184,
+  "vol_oiseau_km": 42.66,
+  "route_km": 57.96
+ },
+ "24031": {
+  "nom": "Beauregard-et-Bassac",
+  "lat": 44.9952,
+  "lon": 0.6331,
+  "vol_oiseau_km": 42.68,
+  "route_km": 77.25
+ },
+ "24256": {
+  "nom": "Marsac-sur-l'Isle",
+  "lat": 45.1816,
+  "lon": 0.6475,
+  "vol_oiseau_km": 42.69,
+  "route_km": 65.21
+ },
+ "19217": {
+  "nom": "Saint-Julien-Maumont",
+  "lat": 45.0351,
+  "lon": 1.7086,
+  "vol_oiseau_km": 42.71,
+  "route_km": 72.04
+ },
+ "46334": {
+  "nom": "Le Vigan-en-Quercy",
+  "lat": 44.7403,
+  "lon": 1.4534,
+  "vol_oiseau_km": 42.74,
+  "route_km": 57.31
+ },
+ "24522": {
+  "nom": "Sarrazac",
+  "lat": 45.4387,
+  "lon": 1.0284,
+  "vol_oiseau_km": 42.76,
+  "route_km": 56.29
+ },
+ "24304": {
+  "nom": "Nantheuil",
+  "lat": 45.4237,
+  "lon": 0.9614,
+  "vol_oiseau_km": 42.83,
+  "route_km": 55.55
+ },
+ "46297": {
+  "nom": "Salviac",
+  "lat": 44.6875,
+  "lon": 1.2705,
+  "vol_oiseau_km": 42.95,
+  "route_km": 56.19
+ },
+ "19156": {
+  "nom": "Palazinges",
+  "lat": 45.1646,
+  "lon": 1.6962,
+  "vol_oiseau_km": 42.95,
+  "route_km": 67.08
+ },
+ "24123": {
+  "nom": "Clermont-de-Beauregard",
+  "lat": 44.9484,
+  "lon": 0.6461,
+  "vol_oiseau_km": 42.99,
+  "route_km": 60.19
+ },
+ "24115": {
+  "nom": "Château-l'Évêque",
+  "lat": 45.2555,
+  "lon": 0.6868,
+  "vol_oiseau_km": 43.09,
+  "route_km": 67.22
+ },
+ "19013": {
+  "nom": "Aubazines",
+  "lat": 45.1873,
+  "lon": 1.6891,
+  "vol_oiseau_km": 43.12,
+  "route_km": 64.62
+ },
+ "24337": {
+  "nom": "Prats-du-Périgord",
+  "lat": 44.6836,
+  "lon": 1.0696,
+  "vol_oiseau_km": 43.28,
+  "route_km": 62.4
+ },
+ "24102": {
+  "nom": "Chancelade",
+  "lat": 45.2107,
+  "lon": 0.6539,
+  "vol_oiseau_km": 43.29,
+  "route_km": 62.12
+ },
+ "19029": {
+  "nom": "Branceilles",
+  "lat": 45.0062,
+  "lon": 1.7119,
+  "vol_oiseau_km": 43.36,
+  "route_km": 75.04
+ },
+ "46106": {
+  "nom": "Floirac",
+  "lat": 44.9065,
+  "lon": 1.6707,
+  "vol_oiseau_km": 43.46,
+  "route_km": 64.23
+ },
+ "46330": {
+  "nom": "Vayrac",
+  "lat": 44.9435,
+  "lon": 1.6944,
+  "vol_oiseau_km": 43.69,
+  "route_km": 77.67
+ },
+ "19184": {
+  "nom": "Saint-Bazile-de-Meyssac",
+  "lat": 45.0552,
+  "lon": 1.7252,
+  "vol_oiseau_km": 43.88,
+  "route_km": 75.18
+ },
+ "24143": {
+  "nom": "Couze-et-Saint-Front",
+  "lat": 44.8234,
+  "lon": 0.725,
+  "vol_oiseau_km": 44.05,
+  "route_km": 62.44
+ },
+ "24485": {
+  "nom": "Saint-Pierre-de-Côle",
+  "lat": 45.3778,
+  "lon": 0.8158,
+  "vol_oiseau_km": 44.18,
+  "route_km": 54.5
+ },
+ "24023": {
+  "nom": "Baneuil",
+  "lat": 44.854,
+  "lon": 0.6924,
+  "vol_oiseau_km": 44.18,
+  "route_km": 65.62
+ },
+ "24350": {
+  "nom": "Razac-sur-l'Isle",
+  "lat": 45.1597,
+  "lon": 0.6191,
+  "vol_oiseau_km": 44.2,
+  "route_km": 62.07
+ },
+ "19198": {
+  "nom": "Saint-Éloy-les-Tuileries",
+  "lat": 45.4571,
+  "lon": 1.2809,
+  "vol_oiseau_km": 44.32,
+  "route_km": 64.23
+ },
+ "24061": {
+  "nom": "Bourrou",
+  "lat": 45.0475,
+  "lon": 0.6028,
+  "vol_oiseau_km": 44.34,
+  "route_km": 76.52
+ },
+ "19023": {
+  "nom": "Beynat",
+  "lat": 45.134,
+  "lon": 1.7236,
+  "vol_oiseau_km": 44.35,
+  "route_km": 71.98
+ },
+ "24456": {
+  "nom": "Saint-Martin-des-Combes",
+  "lat": 44.9626,
+  "lon": 0.6215,
+  "vol_oiseau_km": 44.39,
+  "route_km": 59.09
+ },
+ "19061": {
+  "nom": "Cornil",
+  "lat": 45.2125,
+  "lon": 1.694,
+  "vol_oiseau_km": 44.42,
+  "route_km": 65.02
+ },
+ "24088": {
+  "nom": "Cause-de-Clérans",
+  "lat": 44.8766,
+  "lon": 0.6699,
+  "vol_oiseau_km": 44.43,
+  "route_km": 62.59
+ },
+ "24495": {
+  "nom": "Saint-Romain-de-Monpazier",
+  "lat": 44.7209,
+  "lon": 0.8839,
+  "vol_oiseau_km": 44.44,
+  "route_km": 67.89
+ },
+ "19044": {
+  "nom": "La Chapelle-aux-Saints",
+  "lat": 44.9818,
+  "lon": 1.7205,
+  "vol_oiseau_km": 44.54,
+  "route_km": 75.44
+ },
+ "19285": {
+  "nom": "Vigeois",
+  "lat": 45.3835,
+  "lon": 1.5172,
+  "vol_oiseau_km": 44.66,
+  "route_km": 69.84
+ },
+ "46290": {
+  "nom": "Saint-Projet",
+  "lat": 44.7471,
+  "lon": 1.5117,
+  "vol_oiseau_km": 44.73,
+  "route_km": 59.17
+ },
+ "19216": {
+  "nom": "Saint-Julien-le-Vendômois",
+  "lat": 45.4553,
+  "lon": 1.3171,
+  "vol_oiseau_km": 44.79,
+  "route_km": 63.72
+ },
+ "24039": {
+  "nom": "Besse",
+  "lat": 44.6652,
+  "lon": 1.112,
+  "vol_oiseau_km": 44.85,
+  "route_km": 64.39
+ },
+ "19257": {
+  "nom": "Sérilhac",
+  "lat": 45.096,
+  "lon": 1.7365,
+  "vol_oiseau_km": 44.86,
+  "route_km": 72.31
+ },
+ "24551": {
+  "nom": "Thiviers",
+  "lat": 45.4262,
+  "lon": 0.9064,
+  "vol_oiseau_km": 44.87,
+  "route_km": 56.9,
+  "source": "manuel (utilisateur, sans péages)"
+ },
+ "19126": {
+  "nom": "Marcillac-la-Croze",
+  "lat": 45.0342,
+  "lon": 1.7366,
+  "vol_oiseau_km": 44.92,
+  "route_km": 73.62
+ },
+ "19082": {
+  "nom": "Favars",
+  "lat": 45.2631,
+  "lon": 1.6694,
+  "vol_oiseau_km": 45.06,
+  "route_km": 65.71
+ },
+ "87071": {
+  "nom": "Glandon",
+  "lat": 45.4715,
+  "lon": 1.2158,
+  "vol_oiseau_km": 45.18,
+  "route_km": 56.18
+ },
+ "19042": {
+  "nom": "Chanteix",
+  "lat": 45.313,
+  "lon": 1.6254,
+  "vol_oiseau_km": 45.19,
+  "route_km": 66.73
+ },
+ "24251": {
+  "nom": "Manzac-sur-Vern",
+  "lat": 45.084,
+  "lon": 0.5914,
+  "vol_oiseau_km": 45.22,
+  "route_km": 69.13
+ },
+ "46259": {
+  "nom": "Saint-Clair",
+  "lat": 44.694,
+  "lon": 1.3998,
+  "vol_oiseau_km": 45.33,
+  "route_km": 59.14
+ },
+ "46240": {
+  "nom": "Rocamadour",
+  "lat": 44.8197,
+  "lon": 1.6266,
+  "vol_oiseau_km": 45.44,
+  "route_km": 58.3
+ },
+ "24242": {
+  "nom": "Liorac-sur-Louyre",
+  "lat": 44.8959,
+  "lon": 0.641,
+  "vol_oiseau_km": 45.5,
+  "route_km": 59.34
+ },
+ "46087": {
+  "nom": "Dégagnac",
+  "lat": 44.672,
+  "lon": 1.321,
+  "vol_oiseau_km": 45.54,
+  "route_km": 58.77
+ },
+ "24155": {
+  "nom": "Douville",
+  "lat": 44.9982,
+  "lon": 0.594,
+  "vol_oiseau_km": 45.64,
+  "route_km": 76.03
+ },
+ "24027": {
+  "nom": "Bayac",
+  "lat": 44.8016,
+  "lon": 0.7232,
+  "vol_oiseau_km": 45.69,
+  "route_km": 64.87
+ },
+ "24393": {
+  "nom": "Sainte-Croix",
+  "lat": 44.7303,
+  "lon": 0.8326,
+  "vol_oiseau_km": 45.74,
+  "route_km": 68.5
+ },
+ "46258": {
+  "nom": "Saint-Cirq-Souillaguet",
+  "lat": 44.7049,
+  "lon": 1.4461,
+  "vol_oiseau_km": 45.86,
+  "route_km": 59.48
+ },
+ "24263": {
+  "nom": "Mazeyrolles",
+  "lat": 44.6721,
+  "lon": 0.996,
+  "vol_oiseau_km": 45.89,
+  "route_km": 64.03
+ },
+ "46184": {
+  "nom": "Marminiac",
+  "lat": 44.6535,
+  "lon": 1.1857,
+  "vol_oiseau_km": 45.97,
+  "route_km": 63.87
+ },
+ "19048": {
+  "nom": "Le Chastang",
+  "lat": 45.1772,
+  "lon": 1.7328,
+  "vol_oiseau_km": 46.08,
+  "route_km": 67.82
+ },
+ "24414": {
+  "nom": "Saint-Georges-de-Montclard",
+  "lat": 44.9312,
+  "lon": 0.6127,
+  "vol_oiseau_km": 46.09,
+  "route_km": 62.46
+ },
+ "24257": {
+  "nom": "Marsalès",
+  "lat": 44.6997,
+  "lon": 0.8933,
+  "vol_oiseau_km": 46.14,
+  "route_km": 64.33
+ },
+ "24496": {
+  "nom": "Saint-Romain-et-Saint-Clément",
+  "lat": 45.4274,
+  "lon": 0.873,
+  "vol_oiseau_km": 46.23,
+  "route_km": 66.08
+ },
+ "19121": {
+  "nom": "Lubersac",
+  "lat": 45.45,
+  "lon": 1.3981,
+  "vol_oiseau_km": 46.31,
+  "route_km": 60.68
+ },
+ "24425": {
+  "nom": "Saint-Jean-de-Côle",
+  "lat": 45.412,
+  "lon": 0.8356,
+  "vol_oiseau_km": 46.33,
+  "route_km": 66.93
+ },
+ "24080": {
+  "nom": "Capdrot",
+  "lat": 44.6802,
+  "lon": 0.9427,
+  "vol_oiseau_km": 46.46,
+  "route_km": 65.39
+ },
+ "24295": {
+  "nom": "Montrem",
+  "lat": 45.1348,
+  "lon": 0.5818,
+  "vol_oiseau_km": 46.53,
+  "route_km": 72.35
+ },
+ "19038": {
+  "nom": "Chameyrat",
+  "lat": 45.2452,
+  "lon": 1.7046,
+  "vol_oiseau_km": 46.61,
+  "route_km": 68.8
+ },
+ "24108": {
+  "nom": "La Chapelle-Gonaguet",
+  "lat": 45.2297,
+  "lon": 0.6187,
+  "vol_oiseau_km": 46.64,
+  "route_km": 70.23
+ },
+ "24107": {
+  "nom": "La Chapelle-Faucher",
+  "lat": 45.3759,
+  "lon": 0.7622,
+  "vol_oiseau_km": 46.75,
+  "route_km": 59.24
+ },
+ "24386": {
+  "nom": "Saint-Cernin-de-l'Herm",
+  "lat": 44.6545,
+  "lon": 1.0491,
+  "vol_oiseau_km": 46.76,
+  "route_km": 66.33
+ },
+ "19280": {
+  "nom": "Végennes",
+  "lat": 44.9787,
+  "lon": 1.7489,
+  "vol_oiseau_km": 46.79,
+  "route_km": 78.57
+ },
+ "24010": {
+  "nom": "Annesse-et-Beaulieu",
+  "lat": 45.1813,
+  "lon": 0.5927,
+  "vol_oiseau_km": 46.8,
+  "route_km": 75.38
+ },
+ "19163": {
+  "nom": "Le Pescher",
+  "lat": 45.0791,
+  "lon": 1.7625,
+  "vol_oiseau_km": 46.81,
+  "route_km": 75.56
+ },
+ "46066": {
+  "nom": "Cazals",
+  "lat": 44.6471,
+  "lon": 1.2159,
+  "vol_oiseau_km": 46.82,
+  "route_km": 60.38
+ },
+ "19227": {
+  "nom": "Saint-Mexant",
+  "lat": 45.2898,
+  "lon": 1.6747,
+  "vol_oiseau_km": 46.91,
+  "route_km": 66.3
+ },
+ "19067": {
+  "nom": "Curemonte",
+  "lat": 45.0039,
+  "lon": 1.7577,
+  "vol_oiseau_km": 46.96,
+  "route_km": 81.25
+ }
+}

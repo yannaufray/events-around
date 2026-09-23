@@ -260,6 +260,41 @@ def haversine(lat1, lon1, lat2, lon2):
     return 2 * r * math.asin(math.sqrt(a))
 
 
+ROAD_DISTANCES_FILE = Path(__file__).parent / "distances_route.json"
+
+
+@functools.lru_cache(maxsize=1)
+def _road_distances_table():
+    """Table de calibration Montignac -> communes alentour (distance routière, via OSRM et,
+    pour quelques communes de référence, vérifiée à la main par l'utilisateur — voir le
+    champ "source" du JSON) générée par calibrate_road_distances.py — voir ce script pour
+    le pourquoi : la distance à vol d'oiseau (haversine) sous-estime fortement la distance
+    réelle en Périgord/Corrèze vallonnés (ex. Montignac -> Brive : ~29 km à vol d'oiseau,
+    ~36 km par la route), ce qui rendait les paliers de rayon (config.json) trompeurs en
+    usage réel. Absente ou vide -> on retombe simplement sur haversine (voir apply_distance)."""
+    if not ROAD_DISTANCES_FILE.exists():
+        return []
+    data = json.loads(ROAD_DISTANCES_FILE.read_text(encoding="utf-8"))
+    return list(data.values())
+
+
+def road_distance_km(lat, lon, max_offset_km=5.0):
+    """Distance routière approchée depuis Montignac pour un point (lat, lon) quelconque :
+    cherche la commune la plus proche dans la table de calibration et ajoute l'écart à vol
+    d'oiseau entre ce point et le centre de cette commune (l'événement n'est presque jamais
+    exactement au centre du village). Renvoie None si aucune commune calibrée n'est assez
+    proche (hors zone couverte par calibrate_road_distances.py), pour laisser l'appelant
+    retomber sur le calcul haversine brut."""
+    table = _road_distances_table()
+    if not table:
+        return None
+    best = min(table, key=lambda c: haversine(lat, lon, c["lat"], c["lon"]))
+    offset = haversine(lat, lon, best["lat"], best["lon"])
+    if offset > max_offset_km or best["route_km"] is None:
+        return None
+    return best["route_km"] + offset
+
+
 def norm(s):
     s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
@@ -1272,7 +1307,7 @@ def _place_distance(cfg, entry):
     if "lat" not in entry or "lon" not in entry:
         return "keep", None
     lat0, lon0, radius = cfg["centre"]["lat"], cfg["centre"]["lon"], cfg["rayon_km"]
-    d = haversine(lat0, lon0, entry["lat"], entry["lon"])
+    d = road_distance_km(entry["lat"], entry["lon"]) or haversine(lat0, lon0, entry["lat"], entry["lon"])
     return ("keep" if d <= radius else "drop"), d
 
 
@@ -1428,7 +1463,7 @@ def apply_distance(events, cfg):
     out = []
     for e in events:
         if e.lat is not None and e.lon is not None:
-            e.distance = haversine(lat0, lon0, e.lat, e.lon)
+            e.distance = road_distance_km(e.lat, e.lon) or haversine(lat0, lon0, e.lat, e.lon)
             if e.distance > radius:
                 continue
         out.append(e)  # sans coordonnées : on garde (flux locaux choisis par toi)
@@ -1559,10 +1594,31 @@ def _fav_button(e, uid):
     )
 
 
-def _card(e):
+def _tier_badge(distance, paliers):
+    """Pastille colorée indiquant à quel palier de rayon (Montignac / + Sarlat / ...)
+    appartient une distance donnée, pour repérer d'un coup d'œil — sans relire chaque
+    valeur en km — ce qui n'était pas déjà visible au palier précédent quand on élargit
+    la sélection dans le menu de rayon."""
+    if distance is None or not paliers:
+        return ""
+    # arrondi d'abord, comme data-dist en JS (applyFilters compare des entiers) : sinon
+    # une distance comme 15.4 km s'affiche "≤15 km" alors que le filtre JS l'inclut bien
+    # dans le palier Montignac ≤15 km — incohérence entre le badge affiché et ce qui est
+    # réellement filtré. Affiche juste le seuil du palier (pas le nom de ville, qui fait
+    # doublon avec le lieu déjà affiché juste avant, ni la distance exacte).
+    dist_r = round(distance)
+    for i, p in enumerate(paliers):
+        if dist_r <= p["km"]:
+            return f'<span class="tier tier{min(i, 3)}">≤{p["km"]} km</span>'
+    i = len(paliers) - 1
+    return f'<span class="tier tier{min(i, 3)}">≤{paliers[-1]["km"]} km</span>'
+
+
+def _card(e, paliers=None):
     title = html.escape(e.title)
     uid = event_uid(e.title, e.start)
-    meta = [x for x in (html.escape(e.place), f"{e.distance:.0f} km" if e.distance is not None else "") if x]
+    dist_html = _tier_badge(e.distance, paliers) if paliers else (f"{e.distance:.0f} km" if e.distance is not None else "")
+    meta = [x for x in (html.escape(e.place), dist_html) if x]
     attr_lines = "".join(
         f'<div class="a">Source : {html.escape(producer)}, mis à jour le {html.escape(updated)}</div>'
         for _, producer, updated in e.attributions
@@ -1602,8 +1658,8 @@ def _slug(label):
     return norm(label).replace(" ", "-")
 
 
-def _section(label, events):
-    items = "".join(_card(e) for e in events) or "<li>Rien trouvé.</li>"
+def _section(label, events, paliers=None):
+    items = "".join(_card(e, paliers) for e in events) or "<li>Rien trouvé.</li>"
     return f'<section><h2 id="{_slug(label)}">{html.escape(label)}</h2><ul>{items}</ul></section>'
 
 
@@ -1626,14 +1682,15 @@ def _bucketize(events, windows):
     return buckets
 
 
-def _place_card(place):
+def _place_card(place, paliers=None):
     """Carte pour un lieu culturel (bibliothèque, cinéma...) : infos fixes, pas de date."""
     name = html.escape(place["nom"])
     if place.get("url"):
         name = f'<a href="{html.escape(place["url"])}">{name}</a>'
     lines = "".join(f"<div>{html.escape(l)}</div>" for l in place.get("lines", []))
     if place.get("distance") is not None:
-        lines += f'<div>{place["distance"]:.0f} km</div>'
+        badge = _tier_badge(place["distance"], paliers) if paliers else f'{place["distance"]:.0f} km'
+        lines += f"<div>{badge}</div>"
     links = "".join(
         f'<div><a href="{html.escape(u)}">{html.escape(lbl)}</a></div>' for lbl, u in place.get("links", [])
     )
@@ -1732,14 +1789,14 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=(), source_stats=N
         f"</section>"
     )
 
-    body = "".join(_section(label_, buckets[label_]) for label_, _, _ in windows)
+    body = "".join(_section(label_, buckets[label_], paliers) for label_, _, _ in windows)
     if buckets["À venir"]:
-        body += _section("À venir", buckets["À venir"])
+        body += _section("À venir", buckets["À venir"], paliers)
 
     if lieux:
         body += (
             f'<section><h2 id="{_slug("Lieux & marchés")}">Lieux & marchés</h2><ul>'
-            + "".join(_place_card(p) for p in lieux)
+            + "".join(_place_card(p, paliers) for p in lieux)
             + "</ul></section>"
         )
 
@@ -1825,7 +1882,9 @@ h3{{font-size:14px;margin:14px 0 6px;color:#666}}
 .tabpanel[hidden]{{display:none}}
 .alsobox{{margin:8px 0}} .alsobox summary{{font-size:13px;font-weight:600;color:#666;padding:4px 20px 4px 0}}
 .alsobox ul{{margin-top:6px}} .alsobox li{{border-left:3px solid #0a5}}
-@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}.filterbar{{background:#111}}.selfilter{{background-color:#1c1c1c;border-color:#444;color:#eee;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23aaa" d="M5 7l5 6 5-6z"/></svg>')}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}.tabbtn{{background:#1c1c1c;border-color:#444;color:#eee}}.tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}.alsobox summary{{color:#999}}.alsobox li{{border-left-color:#5fd08a}}}}
+.tier{{display:inline-block;border-radius:8px;padding:1px 7px;font-size:12px;font-weight:600}}
+.tier0{{background:#e2f5ea;color:#0a5}} .tier1{{background:#e2ecfb;color:#1a5cc4}} .tier2{{background:#fdecdb;color:#c46a1a}} .tier3{{background:#f2e3fb;color:#8b30c4}}
+@media(prefers-color-scheme:dark){{body{{background:#111;color:#eee}}li{{background:#1c1c1c;border-color:#333}}.m,.s,.a{{color:#aaa}}.t{{color:#eee}}a{{color:#5fd08a}}.filterbar{{background:#111}}.selfilter{{background-color:#1c1c1c;border-color:#444;color:#eee;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23aaa" d="M5 7l5 6 5-6z"/></svg>')}}details .d{{color:#ccc}}.more{{color:#5fd08a;border-color:#5fd08a}}summary::after{{color:#777}}.fav{{color:#555}}.fav.active{{color:#e0a500}}h3{{color:#999}}.fav-toggle{{border-color:#444;color:#5fd08a}}.tabbtn{{background:#1c1c1c;border-color:#444;color:#eee}}.tabbtn.active{{background:#0a5;border-color:#0a5;color:#fff}}.alsobox summary{{color:#999}}.alsobox li{{border-left-color:#5fd08a}}.tier0{{background:#123822;color:#5fd08a}}.tier1{{background:#132a4a;color:#7fb0f5}}.tier2{{background:#402a11;color:#f0a96a}}.tier3{{background:#331a45;color:#cf93f0}}}}
 </style></head><body><h1>Sorties autour de {label} <span id="km-suffix">{h1_suffix}</span></h1>
 {autres_liens_html}
 {tabs_html}{footer}
