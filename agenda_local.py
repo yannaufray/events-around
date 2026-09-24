@@ -2249,6 +2249,16 @@ function renderFavoris(){{
   markFavButtons();
 }}
 
+// Un seul événement déplié à la fois : ouvrir une fiche referme les autres.
+// 'toggle' ne remonte pas (pas de bubbling), d'où l'écoute en phase de capture.
+document.addEventListener('toggle', function(ev){{
+  var d = ev.target;
+  if (!d.open || !d.matches('li[data-id] > details')) return;
+  document.querySelectorAll('li[data-id] > details[open]').forEach(function(o){{
+    if (o !== d) o.open = false;
+  }});
+}}, true);
+
 document.body.addEventListener('click', function(ev){{
   if (ev.target.closest('#favoris-toggle-archive')) {{
     archivedExpanded = !archivedExpanded;
