@@ -1698,7 +1698,7 @@ def _place_card(place, paliers=None):
     return f'<li{dist_attr}><div class="t">{name}</div><div class="m">{lines}{links}</div></li>'
 
 
-def write_html(events, path, cfg, now, lieux=(), autres_liens=(), source_stats=None):
+def write_html(events, path, cfg, now, lieux=(), autres_liens=(), source_stats=None, drop_labels=None):
     wk_start, wk_end = weekend_window(now)
     week_start, week_end = week_window(now)
     next_wk_start, next_wk_end = next_weekend_window(now)
@@ -1845,14 +1845,16 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=(), source_stats=N
     # l'URL — pratique sur mobile où « voir le code source » n'est pas commode.
     # Pas grave si un visiteur tombe dessus : juste des compteurs par source.
     diag_stats = source_stats or {}
+    diag_drops = set(drop_labels or ())
     diag_lines = [f"généré {now.strftime('%Y-%m-%d %H:%M')} — sources :"]
     diag_lines += [
-        f"  {'⚠ ' if not n and lbl in _SOURCES_TOUJOURS_GARNIES else '  '}{lbl} : {n}"
+        f"  {'⚠ ' if (not n and lbl in _SOURCES_TOUJOURS_GARNIES) or lbl in diag_drops else '  '}{lbl} : {n}"
         for lbl, n in diag_stats.items()
     ]
     diag_comment = "<!--\n" + "\n".join(diag_lines) + "\n-->"
     diag_json = json.dumps(diag_stats, ensure_ascii=False)
     diag_toujours_json = json.dumps(sorted(_SOURCES_TOUJOURS_GARNIES), ensure_ascii=False)
+    diag_drops_json = json.dumps(sorted(diag_drops), ensure_ascii=False)
 
     page = f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorties autour de {label}</title>
@@ -2164,10 +2166,13 @@ fetchFavsFromServer(renderFavoris);
 
 var diagStats = {diag_json};
 var diagToujours = {diag_toujours_json};
-// sources qui devraient toujours répondre et qui sont tombées à 0 : c'est ça,
-// et seulement ça, qui distingue « ça va » de « ça va pas ».
+var diagDrops = {diag_drops_json};
+// sources qui devraient toujours répondre et qui sont tombées à 0, ou qui se
+// sont effondrées par rapport à leur tendance récente (comparaison faite côté
+// Python contre une moyenne glissante, pas juste la veille, pour ne pas
+// confondre un vrai bris de scraper avec la baisse normale de fin de saison).
 var diagWarnKeys = Object.keys(diagStats).filter(function(k) {{
-  return !diagStats[k] && diagToujours.indexOf(k) !== -1;
+  return (!diagStats[k] && diagToujours.indexOf(k) !== -1) || diagDrops.indexOf(k) !== -1;
 }});
 
 function showDiagPanel() {{
@@ -2256,6 +2261,42 @@ def _log_source(label, got, stats=None):
         _warn(f"{label} a renvoyé 0 événement — le site a peut-être changé de structure")
 
 
+# Historique glissant des compteurs par source (persisté d'un run à l'autre via
+# le cache GitHub Actions, cf. workflow) : sert à repérer une source qui
+# s'effondre d'un coup sans attendre qu'elle tombe pile à 0. On compare à la
+# MOYENNE des ~7 derniers relevés plutôt qu'au seul relevé de la veille, parce
+# que les agendas touristiques baissent naturellement en fin de saison — une
+# baisse progressive fait glisser la moyenne avec elle et ne déclenche rien,
+# alors qu'un vrai bris de scraper fait chuter le compte bien en dessous de la
+# tendance récente du jour au lendemain.
+_HISTORY_PATH = Path(__file__).with_name(".source_stats_history.json")
+_HISTORY_LEN = 7
+_DROP_RATIO = 0.3
+_DROP_MIN_BASELINE = 3
+
+
+def _load_history(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _check_drops(stats, history):
+    drops = []
+    for label in _SOURCES_TOUJOURS_GARNIES:
+        current = stats.get(label)
+        if current is None:
+            continue
+        past = history.get(label, [])
+        if past:
+            avg = sum(past) / len(past)
+            if avg >= _DROP_MIN_BASELINE and current < avg * _DROP_RATIO:
+                drops.append((label, avg, current))
+        history[label] = (past + [current])[-_HISTORY_LEN:]
+    return drops
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(Path(__file__).with_name("config.json")))
@@ -2321,11 +2362,22 @@ def main():
         for s in cfg.get("liens_utiles", [])
     ]
 
+    history = _load_history(_HISTORY_PATH)
+    drops = _check_drops(source_stats, history)
+    for label, avg, current in drops:
+        _warn(f"{label} est tombée à {current} (moyenne des derniers relevés : {avg:.1f}) "
+              "— vérifier si le site a changé, ou si c'est juste la fin de saison")
+    try:
+        _HISTORY_PATH.write_text(json.dumps(history, ensure_ascii=False), encoding="utf-8")
+    except OSError as e:
+        print(f"  Historique des sources non sauvegardé : {e}", file=sys.stderr)
+    drop_labels = [label for label, _avg, _current in drops]
+
     events = mark_long_running(apply_distance(dedupe(events), cfg))
     out = Path(cfg.get("dossier_sortie", "sortie"))
     out.mkdir(exist_ok=True)
     write_ics(events, out / "agenda.ics", now)
-    write_html(events, out / "index.html", cfg, now, lieux, autres_liens, source_stats)
+    write_html(events, out / "index.html", cfg, now, lieux, autres_liens, source_stats, drop_labels)
     print(f"{len(events)} événements -> {out}/agenda.ics et {out}/index.html")
 
 

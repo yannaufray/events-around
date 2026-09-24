@@ -26,6 +26,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Restaurer l'historique des compteurs par source
+        uses: actions/cache@v4
+        with:
+          path: .source_stats_history.json
+          key: source-stats-${{ github.run_id }}
+          restore-keys: |
+            source-stats-
+
       - name: Lancer les tests
         run: python3 -m unittest discover -s tests -v
 
