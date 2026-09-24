@@ -559,6 +559,18 @@ class TestBucketize(unittest.TestCase):
         self.assertEqual(buckets["À venir"], [e_far])
 
 
+class TestTodayOrder(unittest.TestCase):
+    def test_dated_events_before_ongoing_expos(self):
+        expo_old = al.Event("Expo A", dt(2026, 8, 1, 10), dt(2026, 10, 31, 18), long_running=True)
+        expo_last_day = al.Event("Expo B", dt(2026, 9, 1, 10), dt(2026, 9, 24, 18), long_running=True)
+        concert = al.Event("Concert", dt(2026, 9, 24, 21), dt(2026, 9, 24, 23))
+        marche = al.Event("Marché", dt(2026, 9, 24, 8), dt(2026, 9, 24, 12))
+        self.assertEqual(
+            al._today_order([expo_old, concert, expo_last_day, marche]),
+            [marche, concert, expo_last_day, expo_old],
+        )
+
+
 class TestParseSarlatMairieHtml(unittest.TestCase):
     def setUp(self):
         self.page = (FIXTURES / "sarlat_mairie_agenda.html").read_text(encoding="utf-8")

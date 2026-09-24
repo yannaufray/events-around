@@ -1783,8 +1783,22 @@ def _slug(label):
 
 
 def _section(label, events, paliers=None):
-    items = "".join(_card(e, paliers) for e in events) or "<li>Rien trouvé.</li>"
+    # le <li class="empty"> s'affiche quand les filtres (catégorie/rayon, côté JS)
+    # masquent toutes les cartes de la section, pour ne pas laisser un titre orphelin.
+    items = (
+        "".join(_card(e, paliers) for e in events) + '<li class="empty" hidden>Rien avec ces filtres.</li>'
+        if events
+        else "<li>Rien trouvé.</li>"
+    )
     return f'<section><h2 id="{_slug(label)}">{html.escape(label)}</h2><ul>{items}</ul></section>'
+
+
+def _today_order(events):
+    """Ordre de la section « Aujourd'hui » : d'abord ce qui a lieu à une heure précise
+    aujourd'hui (par heure de début), puis les événements longs déjà en cours (expos,
+    saisons), dernière chance d'abord — sinon une expo commencée il y a un mois
+    passerait devant le concert de ce soir."""
+    return sorted(events, key=lambda e: (e.long_running, e.end if e.long_running else e.start))
 
 
 def _bucketize(events, windows):
@@ -1826,17 +1840,25 @@ def write_html(events, path, cfg, now, lieux=(), autres_liens=(), source_stats=N
     wk_start, wk_end = weekend_window(now)
     week_start, week_end = week_window(now)
     next_wk_start, next_wk_end = next_weekend_window(now)
+    # « Aujourd'hui » en premier : on vient d'abord voir ce qu'on peut faire
+    # aujourd'hui, sans avoir à le chercher dans plusieurs sections. Les expos et
+    # saisons déjà commencées y tombent naturellement (elles ont lieu aujourd'hui) au
+    # lieu de gonfler « Cette semaine » ; les sections suivantes ne reçoivent donc
+    # que ce qui commence plus tard, et se comparent entre elles.
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=0)
     windows = [
         ("Ce week-end", wk_start, wk_end),
         ("La semaine prochaine", week_start, week_end),
         ("Week-end suivant", next_wk_start, next_wk_end),
+        ("Cette semaine", now, wk_start),
     ]
-    # "Cette semaine" (le reste de la semaine en cours, avant le prochain week-end) n'a
-    # de sens que si on n'est pas déjà dans ce week-end — sinon la fenêtre serait vide.
-    if now < wk_start:
-        windows.append(("Cette semaine", now, wk_start))
-    windows.sort(key=lambda w: w[1])
+    # les autres fenêtres commencent après aujourd'hui ; une fenêtre entièrement
+    # comprise dans aujourd'hui (« Cette semaine » un vendredi, « Ce week-end » un
+    # dimanche) disparaît plutôt que d'afficher une section vide.
+    windows = [(lbl, max(a, today_end + timedelta(seconds=1)), b) for lbl, a, b in windows]
+    windows = [("Aujourd'hui", now, today_end)] + sorted((w for w in windows if w[1] < w[2]), key=lambda w: w[1])
     buckets = _bucketize(events, windows)
+    buckets["Aujourd'hui"] = _today_order(buckets["Aujourd'hui"])
 
     label = html.escape(cfg["centre"].get("nom", ""))
 
@@ -2043,6 +2065,10 @@ function applyFilters(){{
     var villeOk = !currentInclude.length || currentInclude.some(function(v){{ return place.indexOf(v) !== -1; }});
     var distOk = currentInclude.length || !li.dataset.dist || Number(li.dataset.dist) <= currentDist;
     li.classList.toggle('hidden', !(catOk && distOk && villeOk));
+  }});
+  document.querySelectorAll('li.empty').forEach(function(empty){{
+    var ul = empty.parentNode;
+    empty.hidden = !!ul.querySelector(':scope > li:not(.empty):not(.hidden)');
   }});
 }}
 applyFilters();
