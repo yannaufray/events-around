@@ -1270,6 +1270,130 @@ def fetch_sarlat_centreculturel(cfg, w_start, w_end):
     return events
 
 
+# ---------------------------------------------------------------- source 3octies : Office de Tourisme Vézère Périgord Noir
+# Couvre Terrasson-Lavilledieu, Le Lardin-Saint-Lazare, Hautefort... (aucun de ces
+# communes n'a de site dédié utilisable) : au premier abord un SPA JS (CMS Woody /
+# tourism-system.com, comme sarlat-tourisme.com), mais la page liste "?listpage=N"
+# embarque en fait tout le JSON du carrousel côté serveur, dans un
+# <script>var itemsData = [...]</script> — pas besoin d'exécuter de JS. Chaque objet
+# porte déjà ses propres coordonnées GPS par item (contrairement à Brive Tourisme/
+# Périgueux, où toutes les occurrences sont approximées avec un seul point), un champ
+# "dates" (une ou plusieurs occurrences, chacune avec startDate/endDate ISO), un
+# "type" (MUSIQUE, SPORTS ET LOISIRS...) réutilisé comme mot-clé de catégorisation, et
+# parfois un "link" (fiche dédiée sur vezere-perigord.fr) ou "website" (site de
+# l'organisateur) ; à défaut des deux, l'URL est laissée vide — _card() proposera une
+# recherche Google, comme pour DATAtourisme sans page dédiée. Triée à peu près par
+# date croissante mais pas garantie item par item (un item peut porter une première
+# occurrence déjà passée) -> on paginne jusqu'à ce qu'une page entière ne ramène plus
+# aucune occurrence dans la fenêtre, plafonné par sécurité.
+_VP_MAX_PAGES = 12
+
+
+def _extract_js_json(text, varname):
+    """Extrait la valeur JSON d'une affectation `var <varname> = {...};` ou `[...]`
+    embarquée dans un <script>, en comptant les accolades/crochets (une regex seule
+    ne saurait pas s'arrêter au bon endroit à cause des chaînes imbriquées)."""
+    marker = f"var {varname} = "
+    start = text.find(marker)
+    if start == -1:
+        return None
+    start += len(marker)
+    opener = text[start]
+    closer = {"{": "}", "[": "]"}.get(opener)
+    if closer is None:
+        return None
+    depth, in_str, esc = 0, False, False
+    for i in range(start, len(text)):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == opener:
+            depth += 1
+        elif c == closer:
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(text[start:i + 1])
+                except ValueError:
+                    return None
+    return None
+
+
+def parse_vezere_perigord_html(page, source_name):
+    items = _extract_js_json(page, "itemsData")
+    if not items:
+        return []
+    events = []
+    for it in items:
+        title = html.unescape((it.get("title") or "").strip())
+        if not title:
+            continue
+        occ = []
+        for d in it.get("dates") or []:
+            sd, ed = (d.get("start") or {}).get("startDate"), (d.get("end") or {}).get("endDate")
+            if not sd:
+                continue
+            try:
+                start = datetime.fromisoformat(sd).astimezone(TZ)
+                end = datetime.fromisoformat(ed).astimezone(TZ) if ed else start + timedelta(hours=2)
+            except ValueError:
+                continue
+            occ.append((start, end))
+        if not occ:
+            continue
+        occ.sort()
+        long_running = False
+        if len(occ) > 7:  # animation quotidienne/permanente -> une seule ligne, comme DATAtourisme
+            occ = [(occ[0][0], occ[-1][1])]
+            long_running = True
+        town = html.unescape((it.get("town") or "").strip())
+        addr = html.unescape((it.get("address") or "").split("\n")[0].strip())
+        place = town or addr
+        gps = it.get("gps") or {}
+        try:
+            lat_e, lon_e = float(gps["latitude"]), float(gps["longitude"])
+        except (KeyError, TypeError, ValueError):
+            lat_e, lon_e = None, None
+        url = (it.get("link") or it.get("website") or "").strip()
+        description = html.unescape(it.get("desc") or it.get("description") or "")
+        description = re.sub(r"\s+", " ", description).strip()
+        category = openagenda_category(title, [it.get("type") or ""], None)
+        for start, end in occ:
+            events.append(Event(title, start, end, place, url, lat_e, lon_e, [source_name],
+                                 long_running=long_running, category=category, description=description))
+    return events
+
+
+def fetch_vezere_perigord(cfg, w_start, w_end):
+    src = cfg.get("vezere_perigord")
+    if not src:
+        return []
+    base_url = src["url"]
+    events = []
+    for page_num in range(1, _VP_MAX_PAGES + 1):
+        url = base_url + "?" + parse.urlencode({"listpage": page_num})
+        try:
+            got = parse_vezere_perigord_html(http_get(url), src.get("nom", "Office de Tourisme Vézère Périgord Noir"))
+        except Exception as e:
+            _warn(f"Office de Tourisme Vézère Périgord Noir (page {page_num}) ignoré : {e}")
+            break
+        if not got:
+            break
+        in_window = [e for e in got if e.end >= w_start and e.start <= w_end]
+        events += in_window
+        if not in_window and all(e.start > w_end for e in got):
+            break
+    return events
+
+
 # ---------------------------------------------------------------- source 4 : horaires des bibliothèques
 _LIB_DAY_LINE = re.compile(r"^([A-ZÀ-Ü][\w& à-ü-]*?)\s*:\s*(.+)$")
 # variante sans « : » (ex. site de Sarlat : « Mardi 12h30 – 18h30 »)
@@ -2243,6 +2367,7 @@ _SOURCES_TOUJOURS_GARNIES = {
     "Ville de Périgueux",
     "Mairie de Sarlat",
     "Centre Culturel de Sarlat",
+    "Office de Tourisme Vézère Périgord Noir",
 }
 
 
@@ -2352,6 +2477,9 @@ def main():
     events += got
     got = fetch_sarlat_centreculturel(cfg, w_start, w_end)
     _log_source("Centre Culturel de Sarlat", got, source_stats)
+    events += got
+    got = fetch_vezere_perigord(cfg, w_start, w_end)
+    _log_source("Office de Tourisme Vézère Périgord Noir", got, source_stats)
     events += got
 
     lieux = fetch_library_hours(cfg) + fetch_cinema_info(cfg) + fetch_marches(cfg)

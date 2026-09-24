@@ -66,8 +66,17 @@ The script is organized as a fixed pipeline, in `main()`:
      single-page app (Woody/tourism-system.com CMS, mustache-style `{% title %}` templates filled by an
      authenticated API call) with no usable server-rendered markup, so it's skipped — sarlat.fr and
      sarlat-centreculturel.fr cover most of the same events and both render real HTML server-side.
-     vezere-perigord.fr (Vallée Vézère tourism office, covers Terrasson/Hautefort, not Montignac itself)
-     runs the same Woody CMS and is skipped for the same reason.
+   - `fetch_vezere_perigord` — source 3octies, for vezere-perigord.fr (Office de Tourisme Vézère Périgord
+     Noir, covers Terrasson-Lavilledieu/Le Lardin-Saint-Lazare/Hautefort — none of which have their own
+     usable site — not Montignac itself; `config.json["vezere_perigord"]`). Runs the same Woody CMS /
+     tourism-system.com stack as sarlat-tourisme.com and looks like a JS SPA at first, but unlike
+     sarlat-tourisme.com its agenda listing (`?listpage=N`) embeds the full item list server-side as JSON
+     in `<script>var itemsData = [...]</script>` (extracted with `_extract_js_json`, a brace-counting
+     helper — a regex alone can't find the matching end past nested strings/braces) — so it's scraped, not
+     skipped. sarlat-tourisme.com itself is still skipped: its page has no equivalent embedded JSON blob.
+     Each item carries its own GPS (unlike Brive Tourisme/Périgueux, which approximate every occurrence
+     with one town-level point) and sometimes a `link`/`website`; without either the URL is left empty
+     (`_card()` falls back to a Google search, same as DATAtourisme items with no dedicated page).
    - `fetch_marches` — not a scraper: weekly markets (Montignac, Sarlat, Brive, Périgueux) have no
      structured per-date listing worth scraping (they're always-the-same-weekday recurring events), so
      they're entered by hand in `config.json["marches"]` (day/hours verified against each town's official

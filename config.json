@@ -77,6 +77,10 @@
     "lat": 44.8892,
     "lon": 1.2166
   },
+  "vezere_perigord": {
+    "nom": "Office de Tourisme Vézère Périgord Noir",
+    "url": "https://www.vezere-perigord.fr/fr/l-agenda-des-fetes-et-manifestations"
+  },
   "liens_utiles": [
     {
       "nom": "Culture Dordogne (Agence culturelle départementale)",

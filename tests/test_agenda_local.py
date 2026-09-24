@@ -611,6 +611,46 @@ class TestParseSarlatCentreCulturelHtml(unittest.TestCase):
         self.assertEqual((sers.start.hour, sers.start.minute), (20, 30))
 
 
+class TestParseVezerePerigordHtml(unittest.TestCase):
+    def setUp(self):
+        self.page = (FIXTURES / "vezere_perigord_agenda.html").read_text(encoding="utf-8")
+
+    def test_extracts_plausible_events(self):
+        events = al.parse_vezere_perigord_html(self.page, "Office de Tourisme Vézère Périgord Noir")
+        self.assertGreater(len(events), 0)
+        for e in events:
+            self.assertTrue(e.title.strip())
+            self.assertIsInstance(e.start, datetime)
+            self.assertIsNotNone(e.start.tzinfo)
+            self.assertLessEqual(e.start, e.end)
+            self.assertIsNotNone(e.lat)
+            self.assertIsNotNone(e.lon)
+
+    def test_multiple_dates_become_separate_occurrences(self):
+        events = al.parse_vezere_perigord_html(self.page, "Office de Tourisme Vézère Périgord Noir")
+        cine = [e for e in events if "affaire turque" in e.title]
+        self.assertEqual({(e.start.month, e.start.day) for e in cine}, {(10, 2), (10, 3)})
+        self.assertEqual(cine[0].place, "Terrasson-Lavilledieu")
+        self.assertEqual(cine[0].category, "Culture & spectacles")
+
+    def test_many_occurrences_collapsed_to_long_running(self):
+        # plus de 7 dates (ex. animation quotidienne) -> une seule ligne, comme DATAtourisme
+        events = al.parse_vezere_perigord_html(self.page, "Office de Tourisme Vézère Périgord Noir")
+        escape_games = [e for e in events if "Escape Game" in e.title]
+        self.assertEqual(len(escape_games), 1)
+        e = escape_games[0]
+        self.assertTrue(e.long_running)
+        self.assertEqual((e.start.month, e.start.day), (10, 19))
+        self.assertEqual((e.end.month, e.end.day), (10, 30))
+
+    def test_link_used_when_present_else_left_empty(self):
+        events = al.parse_vezere_perigord_html(self.page, "Office de Tourisme Vézère Périgord Noir")
+        monk = next(e for e in events if "Monk" in e.title)
+        self.assertTrue(monk.url.startswith("https://www.vezere-perigord.fr/"))
+        dominicirque = next(e for e in events if "Dominicirque" in e.title)
+        self.assertEqual(dominicirque.url, "")
+
+
 class TestLibraryHours(unittest.TestCase):
     def test_parses_real_fixture(self):
         page = (FIXTURES / "bibliotheque_page.html").read_text(encoding="utf-8")
