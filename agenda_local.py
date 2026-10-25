@@ -1094,6 +1094,10 @@ def parse_perigueux_rss(page, source_name):
             continue
         em = _PGX_ENDDATE.search(block)
         end = _pgx_first_date(em.group(1)) if em else None
+        # les expos donnent une date de fin seule, à 00:00, mais incluse (« du 11
+        # septembre au 14 novembre » -> enddate 14/11 00:00) : on la pousse à 23:59.
+        if end is not None and end.date() > start.date() and (end.hour, end.minute) == (0, 0):
+            end = end.replace(hour=23, minute=59)
         if end is None or end <= start:
             end = start + timedelta(hours=2)
         title = html.unescape(re.sub(r"\s+", " ", tm.group(1))).strip()
@@ -1532,6 +1536,21 @@ def fetch_marches(cfg):
 
 
 # ---------------------------------------------------------------- fusion
+def _inclusive_end(e):
+    """Dernier instant réel de l'événement. Les événements « journée entière » sans
+    date de fin (flux iCal en VALUE=DATE, scrapers qui font start + 1 jour) ont une
+    fin exclusive à minuit pile le lendemain, à la manière d'iCal : un événement du
+    seul dimanche finit alors « lundi 00:00 ». Pris tel quel, il durerait 24h (donc
+    marqué long par mark_long_running) et s'afficherait « du dimanche au lundi ». On
+    ramène donc cette fin à la dernière seconde de la veille. Réservé aux all_day :
+    ailleurs une fin à minuit peut être une vraie date incluse (cf. Périgueux, ramené
+    à 23:59 dans son parseur)."""
+    en = e.end.astimezone(TZ)
+    if e.all_day and en > e.start and (en.hour, en.minute, en.second, en.microsecond) == (0, 0, 0, 0):
+        return en - timedelta(seconds=1)
+    return en
+
+
 def mark_long_running(events):
     """Une occurrence unique mais très longue (expo, saison, ou événement sur plusieurs
     jours comme un vide-grenier samedi ET dimanche) s'affiche comme les événements
@@ -1541,8 +1560,13 @@ def mark_long_running(events):
     « samedi » même le dimanche, laissant croire à tort que l'événement est passé. Un
     concert finissant peu après minuit (quelques heures à peine) reste, lui, sous ce
     seuil et continue de s'afficher avec sa seule date de début."""
+    # une seule date calendaire (journée entière 00:00 -> 23:59, ou fin exclusive à
+    # minuit le lendemain) n'est pas « longue » : elle s'affiche « samedi 31/10 »,
+    # pas « jusqu'au samedi 31/10 ».
     for e in events:
-        if not e.long_running and (e.end - e.start) > timedelta(hours=20):
+        end = _inclusive_end(e)
+        if (not e.long_running and (end - e.start) > timedelta(hours=20)
+                and end.date() != e.start.astimezone(TZ).date()):
             e.long_running = True
     return events
 
@@ -1669,7 +1693,7 @@ def write_ics(events, path, now):
             f"UID:{uid}",
             f"DTSTAMP:{utc(now)}",
             *(
-                [f"DTSTART;VALUE=DATE:{e.start:%Y%m%d}", f"DTEND;VALUE=DATE:{e.end:%Y%m%d}"]
+                [f"DTSTART;VALUE=DATE:{e.start:%Y%m%d}", f"DTEND;VALUE=DATE:{_inclusive_end(e).date() + timedelta(days=1):%Y%m%d}"]
                 if e.all_day
                 else [f"DTSTART:{utc(e.start)}", f"DTEND:{utc(e.end)}"]
             ),
@@ -1688,8 +1712,9 @@ JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 
 
 def _fmt_when(e):
-    s, en = e.start.astimezone(TZ), e.end.astimezone(TZ)
-    if e.long_running:
+    s, en = e.start.astimezone(TZ), _inclusive_end(e)
+    # marqué long à la source (occurrences regroupées) mais sur un seul jour : date simple
+    if e.long_running and en.date() != s.date():
         # « jusqu'au ... » seul est ambigu pour un événement court sur 2-4 jours (ex.
         # vide-grenier samedi + dimanche) : avant qu'il ne commence, on dirait qu'il
         # est déjà en cours depuis longtemps. Réservé aux événements vraiment longs
@@ -2071,6 +2096,62 @@ function applyFilters(){{
     empty.hidden = !!ul.querySelector(':scope > li:not(.empty):not(.hidden)');
   }});
 }}
+
+// --- remise à l'heure : la page est générée une fois par jour par le cron, qui
+// tourne souvent avec plusieurs heures de retard ; entre minuit et ce passage, la
+// page de la veille afficherait encore en tête « Aujourd'hui » les événements
+// d'hier (« jusqu'au samedi » un dimanche matin). On retire donc ce qui est déjà
+// terminé et on remonte dans « Aujourd'hui » ce qui a lieu aujourd'hui, d'après
+// l'heure du navigateur plutôt que celle de la génération.
+(function refreshToday(){{
+  var now = new Date();
+  var todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  var todayH2 = document.getElementById('aujourd-hui');
+  var todayUl = todayH2 && todayH2.parentNode.querySelector('ul');
+  var touched = [];
+  document.querySelectorAll('#tab-decouvrir li[data-id]').forEach(function(li){{
+    var b = li.querySelector('.fav');
+    if (!b || !b.dataset.end) return;
+    var start = new Date(b.dataset.start), end = new Date(b.dataset.end);
+    var ul = li.parentNode;
+    if (end < now) {{
+      li.remove();
+    }} else if (todayUl && ul !== todayUl && start <= todayEnd) {{
+      todayUl.insertBefore(li, todayUl.querySelector(':scope > li.empty'));
+    }} else {{
+      return;
+    }}
+    if (touched.indexOf(ul) === -1) touched.push(ul);
+  }});
+  if (!touched.length) return;
+  // même ordre que _today_order côté Python : d'abord les horaires précis du jour,
+  // puis les événements longs (plus de 20h, cf. mark_long_running), dernière chance d'abord.
+  if (todayUl) {{
+    var key = function(li){{
+      var b = li.querySelector('.fav');
+      var s = new Date(b.dataset.start), e = new Date(b.dataset.end);
+      var longRun = (e - s) > 20 * 3600 * 1000;
+      return [longRun ? 1 : 0, (longRun ? e : s).getTime()];
+    }};
+    var cards = Array.prototype.slice.call(todayUl.querySelectorAll(':scope > li[data-id]'));
+    cards.sort(function(a, b){{ var ka = key(a), kb = key(b); return ka[0] - kb[0] || ka[1] - kb[1]; }});
+    var emptyLi = todayUl.querySelector(':scope > li.empty');
+    cards.forEach(function(li){{ todayUl.insertBefore(li, emptyLi); }});
+    var nothing = todayUl.querySelector(':scope > li:not(.empty):not([data-id])');
+    if (nothing && cards.length) nothing.remove();
+  }}
+  // une section vidée par ce passage (« Ce week-end » un dimanche, quand la page
+  // date du samedi) disparaît, comme côté Python, plutôt que de rester vide.
+  touched.forEach(function(ul){{
+    if (ul === todayUl || ul.querySelector(':scope > li[data-id]')) return;
+    var sec = ul.closest('section');
+    var h2 = sec && sec.querySelector('h2');
+    if (!sec) return;
+    sec.remove();
+    var opt = h2 && document.querySelector('#jumpsel option[value="' + h2.id + '"]');
+    if (opt) opt.remove();
+  }});
+}})();
 applyFilters();
 if (catSel) {{
   catSel.addEventListener('change', function(){{

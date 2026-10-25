@@ -87,6 +87,14 @@ class TestLongRunning(unittest.TestCase):
         out = al.mark_long_running([concert])
         self.assertFalse(out[0].long_running)
 
+    def test_single_all_day_event_is_not_long_running(self):
+        # journée entière du samedi seul, sous les deux conventions de fin
+        # rencontrées dans les sources : 23:59 le jour même, ou minuit le lendemain.
+        e1 = al.Event("Fête", dt(2026, 10, 31), dt(2026, 10, 31, 23, 59), all_day=True)
+        e2 = al.Event("Fête", dt(2026, 10, 31), dt(2026, 11, 1), all_day=True)
+        for e in al.mark_long_running([e1, e2]):
+            self.assertFalse(e.long_running)
+
 
 class TestFmtWhen(unittest.TestCase):
     def test_short_multi_day_event_shows_both_dates(self):
@@ -100,6 +108,21 @@ class TestFmtWhen(unittest.TestCase):
         e = al.Event("Exposition", dt(2026, 1, 1), dt(2026, 12, 31))
         al.mark_long_running([e])
         self.assertEqual(al._fmt_when(e), "jusqu'au jeudi 31/12")
+
+    def test_single_day_event_shows_plain_date(self):
+        e = al.Event("Fête", dt(2026, 10, 31), dt(2026, 11, 1), all_day=True)
+        al.mark_long_running([e])
+        self.assertEqual(al._fmt_when(e), "samedi 31/10 · horaire non précisé")
+        # même marqué long par la source, un seul jour reste une date simple
+        e.long_running = True
+        self.assertEqual(al._fmt_when(e), "samedi 31/10 · horaire non précisé")
+
+    def test_exclusive_midnight_end_shows_previous_day(self):
+        # journée entière sur plusieurs jours avec fin exclusive (iCal VALUE=DATE) au
+        # 01/11 00:00 : l'événement se termine en réalité le samedi 31/10
+        e = al.Event("Exposition", dt(2026, 10, 1), dt(2026, 11, 1), all_day=True)
+        al.mark_long_running([e])
+        self.assertEqual(al._fmt_when(e), "jusqu'au samedi 31/10")
 
 
 class TestIcs(unittest.TestCase):
@@ -279,6 +302,17 @@ class TestParsePerigueuxRss(unittest.TestCase):
         events = al.parse_perigueux_rss(self.page, "Ville de Périgueux")
         e = next(ev for ev in events if "gymnastique" in ev.title)
         self.assertEqual((e.start.year, e.start.month, e.start.day), (2026, 10, 4))
+
+    def test_date_only_end_is_inclusive(self):
+        # « du 11 septembre au 14 novembre » -> enddate 14/11 00:00 : l'expo est
+        # encore ouverte le 14, la fin doit être ramenée en fin de journée
+        page = ("<item><title><![CDATA[Exposition]]></title>"
+                "<ev:startdate>Fri, 11 Sep 2026 00:00:00 +0200</ev:startdate>"
+                "<ev:enddate>Sat, 14 Nov 2026 00:00:00 +0100</ev:enddate></item>")
+        e = al.parse_perigueux_rss(page, "Ville de Périgueux")[0]
+        self.assertEqual((e.end.month, e.end.day, e.end.hour, e.end.minute), (11, 14, 23, 59))
+        al.mark_long_running([e])
+        self.assertEqual(al._fmt_when(e), "jusqu'au samedi 14/11")
 
 
 class TestParseLeberouSubpage(unittest.TestCase):
